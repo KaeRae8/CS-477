@@ -1,0 +1,1043 @@
+#=====================================================================
+# gogo.slag
+#
+# v3.5.0 (2011.06.18)
+#
+# GoGo build system library.
+# 
+# --------------------------------------------------------------------
+#
+# Copyright 2010 Plasmaworks LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+#
+#   http://www.apache.org/licenses/LICENSE-2.0 
+#
+# Unless required by applicable law or agreed to in writing, 
+# software distributed under the License is distributed on an 
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+# either express or implied. See the License for the specific 
+# language governing permissions and limitations under the License.
+#
+#=====================================================================
+
+[include "network.slag"]
+
+class GoGo
+  # See http://plasmaworks.com/wiki/index.php/GoGo for details on installing GoGo.
+  #
+  # Base class for a GoGo build class.  Create "build.slag" with an extended GoGo
+  # class, overwrite build(String) to handle various targets ("gogo compile" ->
+  # build("compile")), and call any of the GoGoCommands in the Global context.
+  # 
+  # Typing "gogo -create" will create a starter build.slag template in the current
+  # directory.
+  METHODS
+    method init:
+      local Date today()
+      build_properties["DATE"] = "($.$(02).$(02))" (today.year,today.month,today.day)
+
+      local Stopwatch timer()
+      try
+        if (command_line_args.count?)
+          build(command_line_args.first)
+        else
+          build("")
+        endIf
+        println( "BUILD SUCCEEDED ($)" (timer) )
+      catch (Error err)
+        err.stack_trace.cull
+        err.stack_trace.history.discard_from(1)
+        println( err.to_String )
+        println( "BUILD FAILED ($)" (timer) )
+        System.exit(1)
+      endTry
+
+    method build( String cmd ):
+      println( "> Build " + cmd )
+      println( "Override build(String) in your GoGo subclass to handle this command." )
+
+endClass
+
+augment Global
+  SINGLETONS
+    GoGoCommands
+endAugment
+
+enum Copy : BitFlags<<Copy>>
+  CATEGORIES
+    always, newer_only, missing_only,
+    insert_properties
+    verbose, quiet
+endEnum
+
+singleton class GoGoCommands
+  PROPERTIES
+    project_properties("project.properties") : Properties
+      # Per-project properties HashTable that is automatically loaded from "project.properties"
+      # at the beginning of a build.  Setting a value automatically saves an updated 
+      # "project.properties" to disk.  Example:
+      #
+      # Earlier session:
+      #   project_properties["GAME_NAME"] = "Deathride"
+      #
+      # Later session:
+      #   println( project_properties["GAME_NAME"] )   # prints: Deathride
+      #
+      # The insert_properties() command searches through a given text file and
+      # replaces text of the form: $(PROPERTY_NAME) with the definition of "PROPERTY_NAME"
+      # if found in any of the property tables (project_properties, local_properties,
+      # or build_properties).
+
+    local_properties("local.properties")     : Properties
+      # Like 'project_properties' but is intended to contain properties for a specific machine.
+      # The resulting "local.properties" file should not be committed to a versioning
+      # repository.
+      #
+      # Example:
+      #   local_properties["MY_FAVORITE_EDITOR"] = "/Users/abe/bin/mvim"
+
+    build_properties()                       : Properties
+      # Like 'project_properties' and 'local_properties' but contains temporary properties
+      # that are not saved between sessions.  The build property "DATE" is automatically
+      # added at the start of a build.
+
+    copy_newer_only=true     : Logical
+      # Specifies the default behavior of copy(). If "true" (the default), a file is
+      # overwrites the existing file of the same name only if it's newer.  This setting
+      # may be overwritten on a per-command basis by sending Copy.newer_only or
+      # Copy.always as a third parameter.
+
+    ignore_hidden_files=true : Logical
+      # When "true" (the default), FileSet objects ignore hidden files (those starting with
+      # ".", as in ".svn".
+
+    os = System.os       : String
+      # The string identifying the operating system, e.g. "mac" or "windows".
+
+    directory_stack() : File[]
+      # Internal use - used with pushd() and popd().
+
+
+  METHODS
+    method header( String mesg="" ):
+      # Prints the given message in an ASCII-text header box.
+      local StringBuilder buffer()
+      forEach (1..(79-mesg.count)/2) buffer.print('-')
+      buffer.print( mesg )
+      while (buffer.count < 79) buffer.print('-')
+      println( buffer.to_String )
+
+    method copy( File src, File dest, Copy options=null ).Logical:
+      # Copies the 'src' file to the 'dest' filepath.
+      #
+      # Returns "true" if actually copied or "false" if the destination file 
+      # already exists and is newer than the source file.
+      #
+      # Example:
+      #   local var filepath = "project/$.txt" (GAME_NAME)
+      #   if (copy( File("template.txt"), File(filepath) ))
+      #     insert_properties(filepath)
+      #   endIf
+      if (options is null)
+        if (Global.copy_newer_only) options = Copy.newer_only
+        else options = always
+      endIf
+
+      local var missing_only = options.includes(Copy.missing_only)
+      if (dest.exists and missing_only) return false
+
+      local var newer_only = options.includes(Copy.newer_only) ...
+        or not options.includes(Copy.always)
+
+      if (not newer_only or not dest.exists or src.newer_than(dest.filepath))
+        local var verbose = options.includes(Copy.verbose) or not options.includes(Copy.quiet)
+        if (verbose) println( "> Copy $ -> $" (src,dest) )
+        File(dest.path).mkdir
+        src.copy(dest.filepath)
+        if (options.includes(Copy.insert_properties))
+          insert_properties( dest.filepath )
+        endIf
+        return true
+      else
+        return false
+      endIf
+
+    method copy( File src, Directory dest, Copy options=null ).Logical:
+      # Like copy(File,File,...) except the second parameter specifies a directory in which
+      # to place the file.  The directory will be created if it doesn't already exist.
+      #
+      # Returns true if the files were copied or false if the destination file already exists
+      # and is newer.
+      #
+      # Example:
+      #   copy(File("help.txt"),Directory("build"))
+      if (options is null)
+        if (Global.copy_newer_only) options = Copy.newer_only
+        else options = always
+      endIf
+
+      dest.create
+      local var dest_filename = "$()$()$" (dest.path,File.directory_separator,src.filename)
+
+      local File dest_file(dest_filename)
+
+      local var missing_only = options.includes(Copy.missing_only)
+      if (dest_file.exists and missing_only) return false
+
+      local var newer_only = options.includes(Copy.newer_only) ...
+        or not options.includes(Copy.always)
+
+      if (not newer_only or not dest_file.exists or src.newer_than(dest_filename))
+        return copy( src, File(dest_filename), options )
+      else
+        return false
+      endIf
+
+
+    method copy( FileSet src, Directory dest, Copy options=null ).Logical:
+      # Copies a set of files to a given directory.  The directory will be created if it 
+      # doesn't already exist.
+      #
+      # Returns true if any files were copied
+      #
+      # Example:
+      #   copy( FileSet("src","*.cpp"), Directory("build") )
+      if (options is null)
+        if (Global.copy_newer_only) options = Copy.newer_only
+        else options = always
+      endIf
+
+      local var quiet = options.includes(Copy.quiet)
+      if (not options.includes(Copy.verbose)) options |= Copy.quiet
+
+      local var path_count = File(src.base_dir).absolute_filepath.count + 1
+      local var count = 0
+      forEach (file in src.files)
+        local var sans_path = file.excluding_leftmost(path_count)
+        if (File(file).is_directory)
+          mkdir(dest.path + FileManager.directory_separator + sans_path,false)
+        else
+          local Logical result
+          if (sans_path.contains('/') or sans_path.contains('\\'))
+            result = copy( File(file), 
+                Directory( dest.path + FileManager.directory_separator + File(sans_path).path ),
+                options )
+          else
+            options &= !Copy.verbose
+            options |= Copy.quiet
+            result = copy( File(file), Directory(dest.path), options )
+          endIf
+          if (result) ++count
+        endIf
+      endForEach
+      if (count? and not quiet) 
+        println( "> Copy # file(s)".pluralize(count) + " from $ to $" (src.base_dir,dest.path) )
+      endIf
+      return count?
+
+    method rename( String current_filepath, String new_filepath ).Logical:
+      # Renames the specified file.
+      #
+      # Example:
+      #   rename("project.html","index.html")
+      local File cur_file(current_filepath)
+      if (not cur_file.exists) return false
+
+      println( "> Rename $ -> $" (current_filepath,new_filepath) )
+      local File new_file(new_filepath)
+      if (new_file.exists) new_file.recursive_delete
+
+      cur_file.rename( new_filepath )
+      return true
+      
+
+    method touch( String filepath ):
+      # Resets the timestamp of the given file to have the current date and time.
+      File(filepath).touch
+
+    method touch( File file ):
+      # Resets the timestamp of the given file to have the current date and time.
+      println( "> Touch " + file )
+      file.touch
+
+    method touch( FileSet files ):
+      println( "> Touch # file".pluralize(files.count) )
+      forEach (filename in files) touch(filename)
+
+    method mkdir( String dirname, Logical verbose=true ).Logical:
+      # Creates a directory with the given filename.
+      local File file(dirname)
+      if (not file.is_directory) 
+        if (verbose) println( "> Make Directory " + dirname )
+        file.mkdir
+        return true
+      else
+        return false
+      endIf
+
+    method delete( String filepath ).Logical:
+      # Deletes the given filepath.  If a directory is specified, all contained
+      # folders and files will be recursively deleted as well.
+      if (not File(filepath).exists) return false
+      println( "> Delete " + filepath )
+      File(filepath).recursive_delete
+      return true
+
+    method delete( FileSet fileset ):
+      # Deletes all the files in a given fileset.
+      forEach (file in fileset.files) delete( file )
+
+    method execute( String command_line, String in_dir=null ):
+      # Executes the given command line command.
+      #
+      # Example:
+      #   execute( "echo hi" )
+      println( "> Execute " + command_line )
+      local String cmd
+      which (System.os)
+        case "windows":
+          cmd = "cmd /C " + command_line
+        others:
+          cmd = command_line
+      endWhich
+
+      local var cur_dir = File(".").absolute_filepath
+      if (in_dir?) File(in_dir).change_dir
+
+      if (System.execute(command_line).exit_code?)
+        if (in_dir?) File(cur_dir).change_dir
+        throw Error( "Command failed." )
+      endIf
+
+      if (in_dir?) File(cur_dir).change_dir
+
+    method zip( FileSet src, String zip_filename, String stored_path="",
+        Int32 compression_level=6 ).Logical:
+      # Zips all the files in the given FileSet in a file named "[zip_filename].zip".
+      # 
+      # Updates any existing files with newer versions and creates the zip file if it 
+      # doesn't exist.
+      #
+      # If 'stored_path' is specified, the original relative path of each file will
+      # be replaced with the stored path.
+      #
+      # Returns true if the zip file was created (even if no files were added to it)
+      # or if any files were added or updated.
+      #
+      # Example:
+      #   # Zip images/windows/*.png,*.jpg to "images.zip" containing "images/*.png,*.jpg"
+      #   zip( "images.zip", FileSet("images/windows","*.png","*.jpg"), "images" )
+      local var zipped_any = false
+      local var created = false
+      if (not File(zip_filename).exists) created = true
+      if (stored_path.count? and not (stored_path.ends_with("/") or stored_path.ends_with("\\")))
+        stored_path += "/"
+      endIf
+      local var path_count = File(src.base_dir).absolute_filepath.count + 1
+      local ZipUpdater updater( zip_filename )
+      forEach (file in src.files)
+        if (File(file).is_directory) nextIteration
+        local var stored_filename = stored_path + file.excluding_leftmost(path_count)
+        stored_filename = stored_filename.replace('\\','/')
+        local var updated = updater.add( file, compression_level, stored_filename )
+        if (updated)
+          if (not zipped_any)
+            zipped_any = true
+            println( "> Update Zip " + zip_filename )
+          endIf
+          #println( "  + " + stored_filename )
+        endIf
+      endForEach
+      updater.close
+      return zipped_any or created
+
+    method unzip( String zip_filename, String pattern="*", Directory dest=null ):
+      if (dest is null) dest = Directory(".")
+
+      dest.path = dest.path.replace('\\','/')
+      pattern = pattern.replace('\\','/')
+      forEach (entry in ZipArchive(zip_filename))
+        entry.filename = entry.filename.replace('\\','/')
+        if (entry.filename.matches_wildcard_pattern(pattern))
+          local var dest_filename = dest.path + "/" + entry.filename
+          println ("> Unzipping " + dest_filename)
+          Directory(File(dest_filename).path).create
+          local var writer = File(dest_filename).create_writer
+          forEach (b in entry.load) writer.write(b)
+          writer.close
+        endIf
+      endForEach
+
+    method chmod( String filepath, String permissions ):
+      # Runs chmod on the given file with the specified permissions string.
+      if (System.os == "mac")
+        execute( //chmod $ "$"// (permissions,filepath) )
+      endIf
+
+    method chmod( FileSet files, String permissions ):
+      # Runs chmod on each file in the given fileset with the specified permissions string.
+      forEach (filename in files)
+        if (System.os == "mac")
+          execute( //chmod $ "$"// (permissions,filename) )
+        endIf
+      endForEach
+
+    method where( String exe_filename ).String:
+      # Returns the location of an executable file (including the file itself) or null if it 
+      # can't be found.
+      forEach (path in System["PATH"].split(FileManager.path_separator))
+        local var filepath = path + FileManager.directory_separator + exe_filename
+        if (File(filepath).exists) return filepath
+      endForEach
+      return null
+
+    method pushd( String filename ):
+      # Remembers the current directory (to be restored with popd()) and performs a 
+      # cd to the specified directory.
+      #
+      # Example:
+      #   pushd( "platforms/mac" )
+      #   execute( "xcodebuild" )
+      #   popd
+      println( "> pushd " + filename )
+      directory_stack.add( File(File(".").absolute_filepath) )
+      File( filename ).change_dir
+
+    method popd:
+      # Returns to a directory previously saved as a result of pushd().
+      #
+      # Example:
+      #   pushd( "platforms/mac" )
+      #   execute( "xcodebuild" )
+      #   popd
+      println( "> popd " + directory_stack.last.absolute_filepath )
+      directory_stack.remove_last.change_dir
+
+    method create_file( File file, String content, Logical overwrite_existing=false ).Logical:
+      # Creates a file with the given String content (usually plain text).
+      #
+      # Only creates the file if it doesn't already exist unless 'overwrite_existing' is "true".
+      #
+      # Returns "true" if the file was created.
+      if (file.exists) 
+        if (overwrite_existing) delete( file.filepath )
+        else return false
+      endIf
+
+      println( "> Creating file " + file.filepath )
+      local var writer = file.create_writer
+      writer.print( content )
+      writer.close
+      return true
+
+    method insert_properties( String filepath, HashTable<<String,String>> remap_table=null ):
+      # Inserts the values of the given HashTable<<String,String>> into the specified 
+      # file, where occurrences of $(KEY_NAME) is replaced with remap_table["KEY_NAME"].
+      #
+      # Uses build-in property tables project_properties, local_properties, and 
+      # build_properties if remap_table is null.
+      #
+      # Example:
+      #   if (copy( File("template.txt"), File(filepath) ))
+      #     insert_properties(filepath)
+      #   endIf
+      local var modified = false
+      local String[] filtered()
+
+      println( "> Insert property values into " + filepath )
+      
+      if (remap_table is null) 
+        remap_table = duplicate(local_properties)
+        remap_table.add(project_properties)
+        remap_table.add(build_properties)
+      endIf
+
+      local HashTable<<String,String>> table()
+      forEach (entry in remap_table.mappings)
+        table[ "$("+entry.key+")" ] = entry.value
+      endForEach
+
+      forEach (line in LineReader(File(filepath)))
+        forEach (search_term in table.keys)
+          local var i = line.index_of( search_term )
+          while (i >= 0)
+            local var before = line.substring(0,i-1)
+            local var after  = line.substring(i + search_term.count)
+            line = before + table[search_term] + after
+            i = line.index_of( search_term )
+          endWhile
+        endForEach
+        filtered.add(line)
+      endForEach
+
+      local var writer = File(filepath).create_writer
+      forEach (line in filtered) writer.println( line )
+      writer.close
+
+    method download( String url, Int32 port=80 ).Byte[]:
+      # Downloads the contents of the given URL and returns them as a Byte list.
+      if (not url.begins_with("http")) url = "http://" + url
+      println( "> Download " + url )
+
+      local Socket socket( url.after_first("//").before_first('/'), port )
+      socket.wait_for_connection
+      local var request =  "GET $ HTTP/1.1\r\n" (url)
+      socket.writer.print(request)
+      socket.writer.print("Host: " + url.after_first("//").before_first("/") + "\r\n")
+      socket.writer.print("User-Agent: GoGo\r\n")
+      socket.writer.print("\r\n")
+
+      local StringBuilder buffer()
+      while (socket.is_connected)
+        forEach (ch in socket.reader) 
+          buffer.print(ch)
+          local var i = buffer.count - 1
+          if (buffer[i] == '\n')
+            if (buffer[i-1] == '\r' and buffer[i-2] == '\n' and buffer[i-3] == '\r')
+              escapeWhile
+            endIf
+          endIf
+        endForEach
+        sleep(5)
+      endWhile
+
+      local var header = buffer.to_String
+      if (not header.before_first('\n').contains(" 200"))
+        return null
+      endIf
+
+      local var total_size = 50000
+      local var known_size = false
+      local var content_length = header.after_first("Content-Length: ")
+      if (content_length.count != header.count)
+        total_size = content_length.before_first("\r\n").to_Int32
+        known_size = true
+        print( "  $ bytes" (total_size) )
+      else
+        print( "(Unknown file size)" )
+      endIf
+      stdout.flush
+
+      local var cur_percent = 0
+      local Byte[] data(total_size)
+      while (socket.is_connected)
+        local var progress = false
+        forEach (ch in socket.reader) data.add(ch); progress = true
+        if (progress and known_size)
+          if (data.count == total_size) escapeWhile
+          local var new_percent = Int32(data.count * 5 / total_size)
+          if (new_percent != 5 or cur_percent != 0)
+            while (cur_percent < new_percent) print("."); ++cur_percent; stdout.flush
+          endIf
+        elseIf (not known_size)
+          local var new_percent = data.count / (1024*256)
+          while (cur_percent < new_percent) print("."); ++cur_percent; stdout.flush
+        endIf
+        sleep(5)
+      endWhile
+
+      # Finish ellipsis
+      while (cur_percent < 5) print("."); ++cur_percent
+      println
+
+      return data
+ 
+    method choose( String prompt ).Logical:
+      local String text = ""
+      loop
+        text = input_String(prompt).to_lowercase
+        if (text == "") nextIteration
+        which (text[0])
+          case 'y','t': return true   # yes/true
+          others:       return false  # no/false
+        endWhich
+      endLoop
+
+    method menu( String cmd, String prompt, String[] options ).String:
+      if (cmd.count?)
+        try
+          local var n = cmd.to_Int32
+          if (n >= 1 and n <= options.count) return options[n-1].before_first("::")
+        catch (Error err2)
+        endTry
+        return cmd
+      endIf
+
+      println("-------------------------------------------------------------------------------")
+
+      if (prompt?) println( prompt.word_wrap(79) ); println
+      forEach (index of options)
+        local var option = options[index]
+        local String info = null
+        if (option.contains("::"))
+          info = option.after_first("::")
+          option = option.before_first("::")
+        endIf
+
+        println( "$(2)) $" (index+1,option) )
+
+        if (info?) 
+          forEach (line in info.word_wrap(73)) println( "      " + line )
+        endIf
+      endForEach
+
+      println("-------------------------------------------------------------------------------")
+
+      loop
+        local var text = input_String("> ").trim
+        if (text.count == 0 or text == "0") return null
+
+        try
+          local var n = text.to_Int32
+          if (n < 0 or n > options.count)
+            println( "Invalid option - choose again." )
+          else
+            return options[n-1].before_first("::")
+          endIf
+        catch (Error err)
+          return text
+        endTry
+      endLoop
+
+endClass
+
+class Directory
+  # Wraps a String to distinguish a Directory from a File.
+  PROPERTIES
+    path : String
+
+
+  METHODS
+    method init( path ):
+      if (exists) path = File(path).absolute_filepath
+
+    method exists.Logical:
+      return File(path).is_directory
+
+    method create:
+      File(path).mkdir
+
+    method must_exist:
+      if (not exists) throw Error(//Directory "$" does not exist.// (path))
+
+    method to_String.String:
+      return path
+endClass
+
+class FileSet : Readable<<String>>
+  # Collects a set of filenames based on wildcard patterns.  Most often used
+  # as a parameter to copy() operations.
+  #
+  # Example:
+  #   forEach (file in FileSet("src","*.slag"))
+  #     println( "$ is a slag source file" (file) )
+  #   endForEach
+  PROPERTIES
+    base_dir : String
+    files()  : String[]
+
+  METHODS
+    method init( base_dir, String pattern="*", Logical recursive=true ):
+      Directory(base_dir).must_exist
+      if (pattern?) include( pattern, recursive )
+
+    method init( base_dir, String pattern1, String pattern2, Logical recursive=true ):
+      Directory(base_dir).must_exist
+      if (pattern1?) include( pattern1, recursive )
+      if (pattern2?) include( pattern2, recursive )
+
+    method init( base_dir, String pattern1, String pattern2, String pattern3,
+        Logical recursive=true ):
+      Directory(base_dir).must_exist
+      if (pattern1?) include( pattern1, recursive )
+      if (pattern2?) include( pattern2, recursive )
+      if (pattern3?) include( pattern3, recursive )
+
+    method create_reader.Reader<<String>>:
+      return files.create_reader
+
+    method relative_files.String[]:
+      local String[] result(files.count)
+      local var path_len = File(base_dir).absolute_filepath.count + 1
+      forEach (filename in files) 
+        result.add(filename.substring(path_len))
+      endForEach
+      return result
+
+    method count.Int32:
+      return files.count
+
+    method add( FileSet other ).FileSet
+      # Adds all the filenames in the other FileSet to this one.
+      # Note that relative_filepath_to() will not always work for
+      # files added in this fashion.
+      #
+      # Returns 'this' for call chaining.
+      forEach (file in other.files)
+        files.add( file )
+      endForEach
+      return this
+
+    method include( String pattern, Logical recursive=true ).FileSet:
+      # Includes additional files matching the given pattern.
+      # Because this compares the pattern against a list of 
+      # filenames recursively obtained from the original path
+      # of this FileSet, you can't specify any files from outside
+      # the original directory.  For that you can add() another
+      # FileSet to this one.
+      local var path = base_dir + FileManager.directory_separator
+      local var recursive_flag = 0
+
+      if (pattern.contains(".."))
+        throw InvalidOperandError( "'pattern' cannot contain parent directories (\"..\")." );
+      endIf
+
+      if (FileManager.directory_separator == '/')
+        pattern .= replace('\\','/')
+        path .= replace('\\','/')
+      else
+        pattern .= replace('/','\\')
+        path .= replace('/','\\')
+      endIf
+
+      if (File(path+pattern).exists)
+        if (File(path+pattern).is_directory) 
+          pattern += FileManager.directory_separator + "*"
+        else
+          files.add( File(path+pattern).absolute_filepath )
+          if (ignore_hidden_files) exclude(".*"); exclude("*$.*" (FileManager.directory_separator))
+          return this
+        endIf
+      endIf
+
+      if (recursive and pattern.contains('*')) recursive_flag = File.recursive
+
+      forEach (entry in File(path).directory_listing(recursive_flag))
+        if (not File(path+entry).is_directory and entry.matches_wildcard_pattern(pattern))
+          files.add( File(path+entry).absolute_filepath )
+        endIf
+      endForEach
+
+      if (ignore_hidden_files) exclude(".*"); exclude("*$.*" (FileManager.directory_separator))
+      return this
+
+    method exclude( String pattern ).FileSet:
+      local Int32 path_count = File(base_dir).absolute_path.count + 1  # +1 for '/'
+
+      if (FileManager.directory_separator == '/')
+        pattern = pattern.replace('\\','/')
+      else
+        pattern = pattern.replace('/','\\')
+      endIf
+
+      local var wild_dir_pattern = pattern + FileManager.directory_separator + "*"
+
+      forEach (entry in files)
+        local var relpath = entry.excluding_leftmost(path_count)
+        if (relpath.matches_wildcard_pattern(pattern) ...
+            or relpath.matches_wildcard_pattern(wild_dir_pattern))
+          removeCurrent entry
+        endIf
+      endForEach
+
+      return this
+
+    method relative_filepath_to( String filename ).String:
+      # Returns a substring of 'filename' (which should be one of the filenames
+      # in this FileSet) relative to the base path of the FileSet.
+      local Int32 path_count = File(base_dir).absolute_path.count + 1  # +1 for '/'
+      return filename.substring(path_count)
+
+    method to_String.String:
+      local StringBuilder buffer()
+      forEach (entry in files)
+        buffer.println( entry )
+      endForEach
+      return buffer.to_String
+
+    method newer_than( String filepath ).Logical:
+      # Returns true if ANY of the files in this fileset are newer than the
+      # specified file.
+      forEach (file in files)
+        if (File(file).newer_than(filepath)) return true
+      endForEach
+      return false
+
+    method sync_into( String dest_dir, Copy options=Copy.newer_only )
+      # Places a copy of all of this FileSet's files and subdirectories into
+      # dest_dir while removing any existing files and folder that do not
+      # exist in this fileset.  
+      println( "> Synch $ -> $" (base_dir,dest_dir) )
+
+      mkdir( dest_dir )
+
+      local var relative_src_files = relative_files
+      local var relative_dest_files = File(dest_dir).directory_listing(
+        File.relative + File.recursive )
+
+      local String src_dir  = File(base_dir).absolute_filepath + File.directory_separator
+      dest_dir = File(dest_dir).absolute_filepath + File.directory_separator
+      if (not src_dir.ends_with( ""+File.directory_separator ))
+        src_dir += File.directory_separator
+      endIf
+      if (not dest_dir.ends_with( ""+File.directory_separator ))
+        dest_dir += File.directory_separator
+      endIf
+
+      forEach (src_file in relative_src_files)
+        copy( File(src_dir+src_file), File(dest_dir+src_file), options )
+        relative_dest_files.remove( src_file )
+        relative_dest_files.remove( File(src_file).path )
+      endForEach
+
+      forEach (dest_file in relative_dest_files)
+        delete( dest_dir + dest_file )
+      endForEach
+
+endClass
+
+class Properties : HashTable<<String,String>>
+  # Creates a HashTable<<String,String>>-based property table.  If a filename is given
+  # then the property table is automatically saved whenever a value changes.
+  PROPERTIES
+    filename : String
+
+  METHODS
+    method init( filename ):
+      prior.init
+      load
+
+    method init:
+      prior.init
+
+    method create_duplicate.Properties:
+      local Properties result()
+      result.add( this )
+      return result
+
+    method set( String key, String value ):
+      if (this.contains(key) and this[key] == value) return
+      prior.set( key, value )
+      save
+
+    method remove( String key ).String:
+      local var result = prior.remove(key)
+      save
+      return result
+
+    method set_default( String key, String value ):
+      if (this.contains(key)) return
+      this[key] = value
+
+    method load:
+      if (filename? and File(filename).exists) load(File(filename))
+
+    method save:
+      if (filename?) save(File(filename))
+
+    method load( File src ):
+      local HashTable<<String,String>> map()
+      local var line_reader = LineReader(src)
+      forEach (line in line_reader)
+        line = line.trim
+        if (line.count == 0) nextIteration
+        local Scanner scanner(line)
+        if (scanner.consume("#")) nextIteration
+        local String key = scanner.scan_id
+        if (not scanner.consume(":")) scanner.consume("=")
+        scanner.consume_ws
+        local String value = scanner.scan_line
+        if (value != "") prior.set(key,value)
+      endForEach
+      line_reader.close
+
+    method save( File dest ):
+      # Writes the key-value pairs in 'map' to this writer in the form:
+      #   key: value
+      # (one per line)
+      local var writer = dest.create_writer
+      forEach (key in keys)
+        local var value = this[key]
+        if (value? and value != "") writer.println( "$: $" (key,value) )
+      endForEach
+      writer.close
+
+    method to_String.String:
+      local StringBuilder buffer()
+      if (filename?) buffer.println( filename )
+      forEach (key in keys)
+        buffer.println( "  $: $" (key,this[key]) )
+      endForEach
+
+      return buffer.to_String
+
+endClass
+
+class ZipUpdater : RequiresCleanup
+  # Internal use - handles creating and updating zip files.
+  PROPERTIES
+    archive_filename : String
+    old_zip, new_zip : ZipArchive
+
+  METHODS
+    method init( archive_filename ):
+      old_zip = ZipArchive( archive_filename )
+
+    method add( String actual_filename, Int64 compression_level=6,
+          String stored_filename=null ).Logical:
+      if (stored_filename is null) stored_filename = actual_filename
+      local File file(actual_filename)
+      if (not file.exists) throw FileNotFoundError(actual_filename)
+      return add( stored_filename, file.to_bytes, Date(file.timestamp), compression_level )
+
+    method add( String stored_filename, Byte[] data, Date date=Date(),
+        Int32 compression_level=6 ).Logical:
+
+      # Zip has a granularity of 2 seconds, so round down to an 
+      # even second for correct comparison.
+      date.second &= !1   
+
+      local var timestamp = date.timestamp
+      local var entry = old_zip.find(stored_filename)
+      if (entry?)
+        if (entry.timestamp >= timestamp) return false  # up to date
+        if (entry.index == -1) return false  # already processed
+
+        entry.index = -1   # don't copy the old entry over
+        if (new_zip is null) new_zip = ZipArchive( archive_filename + ".new" )
+        new_zip.add( stored_filename, timestamp, data, compression_level )
+      else
+        if (new_zip?) new_zip.add( stored_filename, timestamp, data, compression_level )
+        else          old_zip.add( stored_filename, timestamp, data, compression_level )
+        old_zip.add_entry( -1, stored_filename, 0 )  # ensure no duplicates
+      endIf
+      return true
+
+    method close:
+      if (new_zip?)
+        # copy over all other files from archive
+        forEach (entry in old_zip)
+          if (entry.index != -1)
+            new_zip.add( entry.filename, old_zip.load_raw(entry.index) )
+          endIf
+        endForEach
+        File(archive_filename).delete
+        File(new_zip.archive_filename).rename(archive_filename)
+        new_zip = null
+      endIf
+
+    method clean_up:
+      close
+endClass
+
+class ZipArchive : Readable<<ZipEntry>>
+  # Internal use - Slag interface to native Zip handler code.
+  PROPERTIES
+    archive_filename  : String
+    entries()         : ZipEntry[]
+
+  METHODS
+    method init( archive_filename ):
+      load_entries
+
+    method create_reader.Reader<<ZipEntry>>:
+      return entries.create_reader
+
+    method load_entries: native
+
+    method find( String filename ).ZipEntry:
+      forEach (entry in entries)
+        if (entry.filename == filename) return entry
+      endForEach
+      return null
+
+    requisite method add_entry( Int32 index, String filename, Int64 ztime ):
+      entries.add( ZipEntry(this,index,filename.replace('\\','/'),ztime) )
+
+    method load_raw( Int32 index ).RawZipData: native
+
+    method decompress( Int32 index ).Array<<Byte>>: native
+      # Internal use.
+
+    method add( String filename, Int64 timestamp, Byte[] data, Int32 compression_level=6 ):
+      # compression_level: 0 (store only), 1 (fastest), .. 9 (best)
+      local Date date(timestamp)
+      local Int64 ztime = date.year
+      ztime = (ztime * 100) + date.month
+      ztime = (ztime * 100) + date.day
+      ztime = (ztime * 100) + date.hour
+      ztime = (ztime * 100) + date.minute
+      ztime = (ztime * 100) + date.second
+      add( filename, ztime, data.(ArrayList<<Byte>>), 1, compression_level, 
+          false, 0, 0 )
+      add_entry( entries.count, filename, ztime )
+
+    method add( String filename, RawZipData raw_data ):
+      add( filename, raw_data.ztime, raw_data.data.(ArrayList<<Byte>>),
+          raw_data.compression_method, raw_data.compression_level,
+          true, raw_data.uncompressed_count, raw_data.crc32 )
+      add_entry( entries.count, filename, raw_data.ztime )
+
+    method add( String filename, Int64 ztime, ArrayList<<Byte>> data, 
+      Int32 compression_method, Int32 compression_level, 
+      Logical raw, Int32 uncompressed_count, Int32 crc32 ): native
+
+endClass
+
+class ZipEntry
+  # Internal use - models a Zip file entry.
+  PROPERTIES
+    archive   : ZipArchive
+    index     : Int32
+    filename  : String
+    timestamp : Int64
+
+  METHODS
+    method init( archive, index, filename, Int64 ztime ):
+      local Int32 yyyy = (ztime/10000000000) % 10000; 
+      local Int32 mm = (ztime/100000000) % 100; 
+      local Int32 dd = (ztime/1000000) % 100; 
+      local Int32 h = (ztime/10000) % 100; 
+      local Int32 m = (ztime/100) % 100; 
+      local Int32 s = ztime % 100; 
+      timestamp = Date( yyyy, mm, dd, h, m, s ).timestamp
+
+    method decompress.Byte[]:
+      if (index == -1) return null
+      return Byte[]( archive.decompress(index), false )
+
+    method to_String.String:
+      return "$(2) ($) $" (index,Date(timestamp),filename)
+endClass
+
+requisite class RawZipData
+  PROPERTIES
+    data : Byte[]
+    uncompressed_count : Int32
+    ztime              : Int64
+    compression_method : Int32
+    compression_level  : Int32
+    crc32              : Int32
+
+  METHODS
+    requisite method init( Array<<Byte>> array, uncompressed_count,
+        ztime, compression_method, compression_level, crc32 )
+      data = Byte[]( array, false )
+
+    method to_String.String:
+      local StringBuilder buffer()
+
+      forEach (ch in data) 
+        if (ch >= 32 and ch <= 126) buffer.print(Char(ch))
+        else buffer.print('.')
+      endForEach
+      buffer.println
+      buffer.println( "$ bytes / $ uncompressed bytes / method $ / level $ / crc-32 $" ...
+      (data.count,uncompressed_count,compression_method,compression_level,crc32) )
+
+      return buffer.to_String
+endClass
+
