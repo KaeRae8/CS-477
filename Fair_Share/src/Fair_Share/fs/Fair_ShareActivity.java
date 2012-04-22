@@ -3,7 +3,6 @@ package Fair_Share.fs;
 import java.io.*;
 import java.net.BindException;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -22,25 +21,26 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.*;
 import android.widget.TabHost.TabSpec;
 
-
-
 public class Fair_ShareActivity extends Activity {
+	
+	String noteTitle = "You have no new notifications.";
+	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
         
+        setTitle(noteTitle);
+        
+        setContentView(R.layout.main);
         
         //Log.d("colin", "mydebug "+super.getIntent().getStringExtra("fName"));
         File list;
-        //1if(super.getIntent().getStringExtra("group").equals("null")){
+        if(super.getIntent().getStringExtra("group").equals("null")){
         	
-        //1}
+        }
         //1else{
-        
-        
-        
+
         try{
         	//1LinkedList<LinkedList<ItemList>> lists = parseListFile(readFile(super.getIntent().getStringExtra("group")+".txt"));
         	LinkedList<OuterList> lists = parseListFile(readFile("KennyShaw"+".txt"));
@@ -52,10 +52,7 @@ public class Fair_ShareActivity extends Activity {
         	Log.d("colin", "mydebug "+e.getMessage());
         }
         //1}
-        //SlidingDrawer sd = (SlidingDrawer) findViewById(R.id.sdmenu);
-        //sd.setOnDrawerOpenListener(onDrawerOpenListener);
         
-        //makeToast("Item Added");
     	LayoutInflater inflater = (LayoutInflater) 
     	Fair_ShareActivity.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     	//Here x is the name of the xml which contains the popup components
@@ -92,8 +89,6 @@ public class Fair_ShareActivity extends Activity {
             }
         });
         
-        
-        
         Button addItem = (Button) findViewById(R.id.additem_btn);
         addItem.setOnClickListener(new View.OnClickListener() 
         {
@@ -101,9 +96,33 @@ public class Fair_ShareActivity extends Activity {
             {
             	//Here y is the id of the root component
             	pw.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
-            	//pw.showAsDropDown(popupView);
-            	
-            	
+            }
+        });
+        
+        Button createlist = (Button) findViewById(R.id.createlist_btn);
+        createlist.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("***Not Imp***Needs new popup window.");
+            }
+        });
+        
+        Button delete_btn = (Button) findViewById(R.id.delete_btn);
+        delete_btn.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("***Not Imp***Select items to be deleted.");
+            }
+        });
+        
+        Button buy_btn = (Button) findViewById(R.id.buy_btn);
+        buy_btn.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("***Not Imp***Itmes have been bought? ***Needs confirmation window***");
             }
         });
         
@@ -126,7 +145,35 @@ public class Fair_ShareActivity extends Activity {
             }
         });
         
+        Button settings = (Button) findViewById(R.id.settings_btn);
+        settings.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("***Not Imp***Needs popup window***");
+            	pw.dismiss();  	
+            }
+        });
         
+        Button about = (Button) findViewById(R.id.about_btn);
+        about.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("***Not Imp***Needs popup window***");
+            	pw.dismiss();  	
+            }
+        });
+        
+        Button help = (Button) findViewById(R.id.help_btn);
+        help.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("***Not Imp***Needs popup window***");
+            	pw.dismiss();  	
+            }
+        });
         
     }
     public File readFile(String fileName) throws IOException
@@ -407,8 +454,7 @@ public class Fair_ShareActivity extends Activity {
     	toast.setGravity(Gravity.CENTER,0,0);
     	toast.show();
     }
-    
-    public void writeFile(String fileName, File file){
+        public void writeFile(String fileName, File file){
         Socket socket = null;
         String serverIP;
         int serverPort;

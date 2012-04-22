@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -34,6 +35,7 @@ public class SignIn extends Activity{
     public void onCreate(Bundle savedInstanceState) {
     	
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.signin);
         try{
         File users = readFile("Users.txt");
@@ -58,24 +60,30 @@ public class SignIn extends Activity{
             	//{
             		
 	            	Intent startMain = new Intent("fair_shareactivity.MAIN");
-
-	            	//1if(validLogin())
-	            	//1{
-	            	//1User valid= getValidUser();
-
-	            	//1startMain.putExtra("fName", valid.firstName);
-	            	//1startMain.putExtra("lName", valid.lastName);
-	            	//1startMain.putExtra("group", valid.groupName);
-	            	startActivity(startMain);
-	            	//1startup = false;
-	            	//1}
+	            	
+	            	//for easy login
+	            	//startup = false;
+	            	//startActivity(startMain);
+	            	//setContentView(R.layout.main);
+	            	
+	            	
+	            	if(validLogin())
+	            	{
+		            	User valid= getValidUser();
+		            	startMain.putExtra("fName", valid.firstName);
+		            	startMain.putExtra("lName", valid.lastName);
+		            	startMain.putExtra("group", valid.groupName);
+		            	startActivity(startMain);
+		            	setContentView(R.layout.main);
+		            	startup = false;
+	            	}
 
             	}
-            	//else if(startup == false)
+            	//if(startup == false)
             	//{
             	//	setContentView(R.layout.main);
             	//}
-            //}
+           // }
         });
     }
     public boolean validLogin(){
