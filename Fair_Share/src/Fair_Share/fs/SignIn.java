@@ -47,6 +47,7 @@ public class SignIn extends Activity{
         }
         catch(Exception e){
         	Log.d("colin", "mydebug "+e.getMessage());
+        	e.printStackTrace();
         }
         Button signin = (Button) findViewById(R.id.signin_btn);
 
@@ -123,7 +124,7 @@ public class SignIn extends Activity{
     {
     	File file=new File("/data/data/Fair_Share.fs/"+fileName);
 		String serverIP="zombiegod.com";
-        int serverPort = 1234;
+        int serverPort = 1235;
         Socket socket = null;
         ObjectInputStream ois = null;
         ObjectOutputStream oos = null;

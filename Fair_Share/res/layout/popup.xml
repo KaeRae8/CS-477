@@ -40,7 +40,6 @@
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
 		android:layout_y="125dp"
-		android:inputType="number"
 	    android:hint="Price..." />
 	
 	<AutoCompleteTextView
@@ -49,9 +48,24 @@
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
 		android:layout_y="175dp"
-		android:inputType="number"
 	    android:hint="Quantity..." />
 	
+	<EditText
+	    android:id="@+id/date_fill"
+	    android:inputType="date"
+	    android:layout_width="260dp"
+	    android:layout_height="wrap_content"
+	    android:layout_x="30dp"
+		android:layout_y="225dp"
+	    android:hint="Date To Get Item By..." />
+	
+	<AutoCompleteTextView
+	    android:id="@+id/description_fill"
+	    android:layout_width="260dp"
+	    android:layout_height="wrap_content"
+	    android:layout_x="30dp"
+		android:layout_y="275dp"
+	    android:hint="Description..." />
 	
 	<TextView
 		android:id="@+id/poptext"

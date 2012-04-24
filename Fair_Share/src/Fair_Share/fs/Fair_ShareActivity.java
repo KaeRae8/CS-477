@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.*;
 import android.widget.TabHost.TabSpec;
@@ -24,7 +25,12 @@ import android.widget.TabHost.TabSpec;
 public class Fair_ShareActivity extends Activity {
 	
 	String noteTitle = "You have no new notifications.";
-	
+	LinkedList<OuterList> lists;
+	String listOwnerFirstName;
+	String listOwnerLastName;
+	String currentListName;
+	String currentFileName;
+	OuterList currentOuterList;
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,24 +40,80 @@ public class Fair_ShareActivity extends Activity {
         
         setContentView(R.layout.main);
         
-        //Log.d("colin", "mydebug "+super.getIntent().getStringExtra("fName"));
-        File list;
         if(super.getIntent().getStringExtra("group").equals("null")){
         	
         }
-        //1else{
+        else{
 
         try{
-        	//1LinkedList<LinkedList<ItemList>> lists = parseListFile(readFile(super.getIntent().getStringExtra("group")+".txt"));
-        	LinkedList<OuterList> lists = parseListFile(readFile("KennyShaw"+".txt"));
-        	//writeFile("testFile.txt",readFile("KennyShaw.txt"));
-        	displayList(lists.get(0).itemLists.get(0),1);
+        	lists = parseListFile(readFile(super.getIntent().getStringExtra("group")+".txt"));
+        	
+
+        	//writeFile("KennyShaw.txt",ConvertListToFile(parseListFile(readFile("ColinGray"+".txt")),readFile("ColinGray"+".txt")));
+
+        	currentFileName=super.getIntent().getStringExtra("group")+".txt";
+
+        	listOwnerFirstName=super.getIntent().getStringExtra("fName");
+        	listOwnerLastName=super.getIntent().getStringExtra("lName");
+        	
+        	currentOuterList=null;
+        	Log.d("colin","mydebug looking for list");
+        	for(int i=0;i<lists.size();i++){
+        		
+        		Log.d("colin","mydebug comparing "+lists.get(i).firstName+" and "+listOwnerFirstName+" then " +lists.get(i).lastName +" and "+ listOwnerLastName);
+        		if(lists.get(i).firstName.equalsIgnoreCase(listOwnerFirstName) && lists.get(i).lastName.equalsIgnoreCase(listOwnerLastName))
+        		{
+        			Log.d("colin","mydebug found list");
+        		currentOuterList =lists.get(i);
+        		}
+        	}
+        	
+        	//display users first list
+        	displayList(currentOuterList.itemLists.get(0),1);
+
+        	currentListName=lists.get(0).itemLists.get(0).listName;
+        	
+        	///////////////////////////////////
+        	//add radio groups
+        	RadioGroup listRadios=(RadioGroup) this.findViewById(R.id.radioGroup1);
+        	listRadios.removeAllViews();
+
+        	RadioButton button;
+        	OnClickListener listener;
+        	
+        	for(int i =0;i<currentOuterList.itemLists.size() && i<3;i++){
+        		button=new RadioButton(Fair_ShareActivity.this);
+        		button.setLayoutParams(new LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT));
+        		button.setText(currentOuterList.itemLists.get(i).listName);
+        		
+        		final String name=button.getText().toString();
+        		
+        		listener = new View.OnClickListener() 
+                {
+                    public void onClick(View v) 
+                    {
+                    	changeList(name);
+                    	
+                    }
+                };
+        		
+        		button.setOnClickListener(listener);
+        		
+        		if(i==0){
+        			//button.setChecked(true);
+        		}
+        		listRadios.addView(button);
+        		
+        		
+        	}
 
         }
         catch(Exception e){
-        	Log.d("colin", "mydebug "+e.getMessage());
+        	Log.d("colin", "mydebug error"+e.getMessage());
         }
-        //1}
+        }
         
     	LayoutInflater inflater = (LayoutInflater) 
     	Fair_ShareActivity.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -140,6 +202,50 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
+            	
+            	AutoCompleteTextView name = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.name_fill);
+            	AutoCompleteTextView price = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.price_fill);
+            	AutoCompleteTextView quantity = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.quantity_fill);
+            	AutoCompleteTextView description = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.description_fill);
+            	EditText date = (EditText)pw.getContentView().findViewById(R.id.date_fill);
+            	
+            	RadioButton buttonHigh=(RadioButton)pw.getContentView().findViewById(R.id.priorityhigh_radio);
+            	RadioButton buttonMed=(RadioButton)pw.getContentView().findViewById(R.id.prioritymed_radio);
+            	RadioButton buttonLow=(RadioButton)pw.getContentView().findViewById(R.id.prioritylow_radio);
+
+
+            	String nameText=name.getText().toString();
+            	String priceText= price.getText().toString();
+            	String quantityText=quantity.getText().toString();
+            	String descriptionText= description.getText().toString();
+            	
+            	if(nameText.isEmpty()){
+            		nameText="empty";
+            	}
+            	if(priceText.isEmpty()){
+            		priceText="empty";
+            	}
+            	if(quantityText.isEmpty()){
+            		quantityText="empty";
+            	}
+            	if(descriptionText.isEmpty()){
+            		descriptionText="empty";
+            	}
+
+            	String priority="";
+            	if(buttonHigh.isChecked()){
+            		priority="high";
+            	}
+            	else if(buttonMed.isChecked()){
+            		priority="medium";
+            	}
+            	else if(buttonLow.isChecked()){
+            		priority="high";
+            	}
+
+            	
+            	addItem(lists, new Item( nameText ,priceText ,quantityText, priority, quantityText, descriptionText), currentFileName,listOwnerFirstName,listOwnerLastName ,currentListName);
+            	
             	makeToast("Item Added");
             	pw.dismiss();  	
             }
@@ -181,7 +287,7 @@ public class Fair_ShareActivity extends Activity {
     	File file=new File("/data/data/Fair_Share.fs/"+fileName);
 		String serverIP="zombiegod.com";
 		
-        int serverPort = 1234;
+        int serverPort = 1235;
         Socket socket = null;
         ObjectInputStream ois = null;
         ObjectOutputStream oos= null;
@@ -208,48 +314,59 @@ public class Fair_ShareActivity extends Activity {
                 //socket.close();
         }
         catch(Exception e){
-            System.out.println("I/O error");
+            System.out.println("I/O error"+e.getMessage());
             e.printStackTrace();
         }
         
     	return file;
     }
     
-    public File ConvertListToFile(LinkedList<OuterList> list){
-    	File file = new File("/data/data/Fair_Share.fs/tempFile");
+    public File ConvertListToFile(LinkedList<OuterList> list,File file){
+    	
+    
     	try{
-    	BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
+    	BufferedWriter bw = new BufferedWriter(new FileWriter(file));
     	for(int i=0;i<list.size();i++){
+    		Log.d("colin","writing "+convertOuterListToLine(list.get(i)));
         	bw.write(convertOuterListToLine(list.get(i)));
         if(i != list.size()){	
         	bw.newLine();
         	}
     	}
-    	
+    	bw.write(" done");
+    	bw.flush();
+    	bw.close();
     	}
     	catch(Exception e){
-    		
+    		Log.d("colin", "mydebug error"+e.getMessage());
     	}
+    	
+
     	return file;
     }
     
     public String convertOuterListToLine(OuterList list){
     	String returnString="";
-    	returnString += list.firstName;
-    	returnString += list.lastName;
+    	returnString += list.firstName+" ";
+    	returnString += list.lastName+" ";
+    	
     	for(int i=0;i<list.itemLists.size();i++){
     		returnString+= convertItemListToLine(list.itemLists.get(i),i+1);
     	}
-    	return "";
+    	int countPlus=list.itemLists.size()+1;
+    	returnString+="List"+countPlus+"Name: null";
+    	return returnString;
     }
 
     public String convertItemListToLine(ItemList list,int listNumber){
     	String returnString="";
-    	returnString+= "List"+listNumber+"Name";
+    	returnString+= "List"+listNumber+"Name:";
     	returnString+= " "+list.listName+" Items:";
+    	
     	for(int i =0;i<list.items.size();i++){
-    		returnString+=" "+list.items.get(i).name.replace(" ","_")+" "+list.items.get(i).price.replace(" ","_")+" "+list.items.get(i).quantity.replace(" ","_")+" "+list.items.get(i).buyDate.replace(" ","_")+" "+list.items.get(i).desc.replace(" ","_")+" ";
+    		returnString+=" "+list.items.get(i).name.replace(" ","_")+" "+list.items.get(i).price.replace(" ","_")+" "+list.items.get(i).quantity.replace(" ","_")+" "+list.items.get(i).priority+" "+list.items.get(i).buyDate.replace(" ","_")+" "+list.items.get(i).desc.replace(" ","_")+" ";
     	}
+    	
     	return returnString;
     }
     
@@ -454,7 +571,48 @@ public class Fair_ShareActivity extends Activity {
     	toast.setGravity(Gravity.CENTER,0,0);
     	toast.show();
     }
-        public void writeFile(String fileName, File file){
+  
+    public void addItem(LinkedList<OuterList> list, Item item, String filename,String listOwnerFirstName,String listOwnerLastName ,String listName){
+    	
+    	
+    	try{
+    		System.out.println("add item step 1");
+    	for(int i=0;i<list.size();i++){
+    		System.out.println("add item step 2");
+    		if(list.get(i).firstName.equalsIgnoreCase(listOwnerFirstName)  && list.get(i).lastName.equalsIgnoreCase(listOwnerLastName)){
+    		for(int j=0;j<list.get(i).itemLists.size();j++){
+    			if(list.get(i).itemLists.get(j).listName==listName){
+    				list.get(i).itemLists.get(j).items.add(item);
+    				System.out.println("adding item i:"+i+" j:"+j);
+    				displayList(list.get(i).itemLists.get(j),1);
+    			}
+    				
+    			}
+    		}
+    	}
+    	
+    	//the first list of every person needs to be the same.
+    	//for(int i=0;i<list.size();i++){
+    	//	list.get(i).itemLists.get(0).items  = list.get(0).itemLists.get(0).items;
+    	//}
+    	
+    	writeFile(filename,ConvertListToFile(list,readFile(filename)));
+    	}
+    	catch(Exception e){
+    		Log.d("mydebug","error adding item to list "+e.getMessage());
+    	}
+    }
+
+    public void changeList(String listName){
+    	for(int i=0;i<currentOuterList.itemLists.size();i++){
+    		if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(listName)){
+    			displayList(currentOuterList.itemLists.get(i),1);
+    			currentListName=listName;
+    		}
+    	}
+    }
+    
+    public void writeFile(String fileName, File file){
         Socket socket = null;
         String serverIP;
         int serverPort;
@@ -464,7 +622,7 @@ public class Fair_ShareActivity extends Activity {
         int stage=1;
         
 			serverIP="zombiegod.com";
-            serverPort = 1234;
+            serverPort = 1235;
 
         
         try{
