@@ -170,6 +170,32 @@ public class Fair_ShareActivity extends Activity {
             }
         });
         
+        RadioButton alphaSort = (RadioButton) findViewById(R.id.alpha_radio);
+        alphaSort.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				for(int i =0;i<currentOuterList.itemLists.size();i++){
+					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
+						displayList(currentOuterList.itemLists.get(i),1);
+					}
+				}
+			}
+		});
+        
+        RadioButton prioritySort = (RadioButton) findViewById(R.id.priority_radio);
+        prioritySort.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View v) {
+				for(int i =0;i<currentOuterList.itemLists.size();i++){
+					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
+						displayList(currentOuterList.itemLists.get(i),2);
+					}
+				}
+			}
+		});
+        
+        
         Button delete_btn = (Button) findViewById(R.id.delete_btn);
         delete_btn.setOnClickListener(new View.OnClickListener() 
         {
@@ -287,7 +313,7 @@ public class Fair_ShareActivity extends Activity {
     	File file=new File("/data/data/Fair_Share.fs/"+fileName);
 		String serverIP="zombiegod.com";
 		
-        int serverPort = 1235;
+        int serverPort = 1234;
         Socket socket = null;
         ObjectInputStream ois = null;
         ObjectOutputStream oos= null;
@@ -622,7 +648,7 @@ public class Fair_ShareActivity extends Activity {
         int stage=1;
         
 			serverIP="zombiegod.com";
-            serverPort = 1235;
+            serverPort = 1234;
 
         
         try{
