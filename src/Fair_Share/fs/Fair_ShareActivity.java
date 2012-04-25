@@ -127,6 +127,12 @@ public class Fair_ShareActivity extends Activity {
       	
       	final View deletepopView = inflater.inflate(R.layout.deletepop, null, false);
       	final PopupWindow deletewindow = new PopupWindow(deletepopView,450,675,true);
+      	
+      	final View addlistpopView = inflater.inflate(R.layout.addlistpop, null, false);
+      	final PopupWindow addlistwindow = new PopupWindow(addlistpopView,450,675,true);
+      	
+      	final View deletelistpopView = inflater.inflate(R.layout.deletelistpop, null, false);
+      	final PopupWindow deletelistwindow = new PopupWindow(deletelistpopView,450,675,true);
       	      	
         TabHost th = (TabHost) findViewById (R.id.tabhost);
         th.setup();
@@ -145,18 +151,8 @@ public class Fair_ShareActivity extends Activity {
         ts.setContent(R.id.menu);
         ts.setIndicator("Menu");
         th.addTab(ts); 
-
-        Button logout = (Button) findViewById(R.id.logout_btn);
-        logout.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {	            	
-            	Intent signIn = new Intent(Fair_ShareActivity.this,SignIn.class);
-        		startActivity(signIn);
-            	setContentView(R.layout.signin);
-            }
-        });
-        
+                
+        //add item
         Button addItem = (Button) findViewById(R.id.additem_btn);
         addItem.setOnClickListener(new View.OnClickListener() 
         {
@@ -164,106 +160,6 @@ public class Fair_ShareActivity extends Activity {
             {
             	//Here y is the id of the root component
             	pw.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
-            }
-        });
-        
-        Button createlist = (Button) findViewById(R.id.createlist_btn);
-        createlist.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {
-            	makeToast("***Not Imp***Needs new popup window.");
-            }
-        });
-        
-        RadioButton alphaSort = (RadioButton) findViewById(R.id.alpha_radio);
-        alphaSort.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				for(int i =0;i<currentOuterList.itemLists.size();i++){
-					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
-						displayList(currentOuterList.itemLists.get(i),1);
-					}
-				}
-			}
-		});
-        
-        RadioButton prioritySort = (RadioButton) findViewById(R.id.priority_radio);
-        prioritySort.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				for(int i =0;i<currentOuterList.itemLists.size();i++){
-					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
-						displayList(currentOuterList.itemLists.get(i),2);
-					}
-				}
-			}
-		});
-        
-        Button delete_btn = (Button) findViewById(R.id.delete_btn);
-        delete_btn.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {
-            	
-            	if(firstpress)
-            	{
-            		firstpress = false;
-            		makeToast("Select Items to be deleted.\nPress Delete again to remove items.");
-            	}
-            	else
-            	{
-            		firstpress = true;
-            		deletewindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
-            	}
-            }
-        });
-        
-        Button canceldelete = (Button) deletepopView.findViewById(R.id.canceldelete_btn);
-        canceldelete.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {
-            	deletewindow.dismiss();  	
-            }
-        });
-        
-        Button confirmdelete = (Button) deletepopView.findViewById(R.id.confirmdelete_btn);
-        confirmdelete.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {
-            	makeToast("Selected items have been removed.");
-            	deletewindow.dismiss();  	
-            }
-        });
-        
-        Button buy_btn = (Button) findViewById(R.id.buy_btn);
-        buy_btn.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {
-            	buywindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
-            }
-        });
-        
-        Button cancelbuy = (Button) buypopView.findViewById(R.id.cancelbuy_btn);
-        cancelbuy.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {
-            	buywindow.dismiss();  	
-            }
-        });
-        
-        Button confirmbuy = (Button) buypopView.findViewById(R.id.confirmbuy_btn);
-        confirmbuy.setOnClickListener(new View.OnClickListener() 
-        {
-            public void onClick(View v) 
-            {
-            	makeToast("Check item have been marked as bought.");
-            	buywindow.dismiss();  	
             }
         });
         
@@ -330,16 +226,159 @@ public class Fair_ShareActivity extends Activity {
             }
         });
         
-        Button settings = (Button) findViewById(R.id.settings_btn);
-        settings.setOnClickListener(new View.OnClickListener() 
+        //create list
+        Button createlist = (Button) findViewById(R.id.createlist_btn);
+        createlist.setOnClickListener(new View.OnClickListener() 
         {
             public void onClick(View v) 
             {
-            	makeToast("***Not Imp***Needs popup window***");
-            	pw.dismiss();  	
+            	addlistwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
             }
         });
         
+        Button canceladdlist = (Button) addlistpopView.findViewById(R.id.canceladdlist_btn);
+        canceladdlist.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	addlistwindow.dismiss();  	
+            }
+        });
+        
+        Button confirmaddlist = (Button) addlistpopView.findViewById(R.id.confirmaddlist_btn);
+        confirmaddlist.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("New list has been created.");
+            	addlistwindow.dismiss();  	
+            }
+        });
+        
+        //Delete list
+        Button deletelist = (Button) findViewById(R.id.deletelist_btn);
+        deletelist.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	deletelistwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            }
+        });
+        
+        Button canceldeletelist = (Button) deletelistpopView.findViewById(R.id.canceldeletelist_btn);
+        canceldeletelist.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	deletelistwindow.dismiss();  	
+            }
+        });
+        
+        Button confirmdeletelist = (Button) deletelistpopView.findViewById(R.id.confirmdeletelist_btn);
+        confirmdeletelist.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("List has been removed.");
+            	deletelistwindow.dismiss();  	
+            }
+        });
+
+        //radio buttons for sorting
+        RadioButton alphaSort = (RadioButton) findViewById(R.id.alpha_radio);
+        alphaSort.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				for(int i =0;i<currentOuterList.itemLists.size();i++){
+					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
+						displayList(currentOuterList.itemLists.get(i),1);
+					}
+				}
+			}
+		});
+        
+        RadioButton prioritySort = (RadioButton) findViewById(R.id.priority_radio);
+        prioritySort.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View v) {
+				for(int i =0;i<currentOuterList.itemLists.size();i++){
+					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
+						displayList(currentOuterList.itemLists.get(i),2);
+					}
+				}
+			}
+		});
+       
+        //delete items
+        Button delete_btn = (Button) findViewById(R.id.delete_btn);
+        delete_btn.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	
+            	if(firstpress)
+            	{
+            		firstpress = false;
+            		makeToast("Select Items to be deleted.\nPress Delete again to remove items.");
+            	}
+            	else
+            	{
+            		firstpress = true;
+            		deletewindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            	}
+            }
+        });
+        
+        Button canceldelete = (Button) deletepopView.findViewById(R.id.canceldelete_btn);
+        canceldelete.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	deletewindow.dismiss();  	
+            }
+        });
+        
+        Button confirmdelete = (Button) deletepopView.findViewById(R.id.confirmdelete_btn);
+        confirmdelete.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("Selected items have been removed.");
+            	deletewindow.dismiss();  	
+            }
+        });
+        
+        //buy items
+        Button buy_btn = (Button) findViewById(R.id.buy_btn);
+        buy_btn.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	buywindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            }
+        });
+        
+        Button cancelbuy = (Button) buypopView.findViewById(R.id.cancelbuy_btn);
+        cancelbuy.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	buywindow.dismiss();  	
+            }
+        });
+        
+        Button confirmbuy = (Button) buypopView.findViewById(R.id.confirmbuy_btn);
+        confirmbuy.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("Check item have been marked as bought.");
+            	buywindow.dismiss();  	
+            }
+        });
+        
+        //menu about     
         Button about = (Button) findViewById(R.id.about_btn);
         about.setOnClickListener(new View.OnClickListener() 
         {
@@ -350,6 +389,7 @@ public class Fair_ShareActivity extends Activity {
             }
         });
         
+        //menu help
         Button help = (Button) findViewById(R.id.help_btn);
         help.setOnClickListener(new View.OnClickListener() 
         {
@@ -360,7 +400,20 @@ public class Fair_ShareActivity extends Activity {
             }
         });
         
+        //logout
+        Button logout = (Button) findViewById(R.id.logout_btn);
+        logout.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {	            	
+            	Intent signIn = new Intent(Fair_ShareActivity.this,SignIn.class);
+        		startActivity(signIn);
+            	setContentView(R.layout.signin);
+            }
+        });
+        
     }
+    
     public File readFile(String fileName) throws IOException
     {
     	File file=new File("/data/data/Fair_Share.fs/"+fileName);

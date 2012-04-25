@@ -30,15 +30,9 @@
                 <LinearLayout
 				    android:id="@+id/groups"
 				    android:layout_width="match_parent"
-				    android:layout_height="match_parent" >
-
-                    <LinearLayout
-                        android:id="@+id/linearLayout2"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="#EEEEEF"
-                        android:orientation="vertical" >
-							
+				    android:layout_height="match_parent" 
+ 					android:background="#EEEEEF"
+                    android:orientation="vertical" >
                          <TextView
                             android:id="@+id/grouptotal"
                             android:layout_width="match_parent"
@@ -88,8 +82,6 @@
                             android:background="#cc666666"
                             android:text="Sally owes you $00.00"
                             android:textAppearance="?android:attr/textAppearanceLarge" />
-
-                    </LinearLayout>
 
 				</LinearLayout>
 				
@@ -239,7 +231,7 @@
 						            android:layout_width="match_parent"
 						            android:layout_height="match_parent"
 						            android:orientation="vertical"
-						            android:background="#333" >
+						            android:background="#cc333333" >
 						            
 						            <RadioGroup
 						                android:id="@+id/radioGroup1"
@@ -276,6 +268,15 @@
 		                        			android:layout_centerHorizontal="true"
 		                        			android:text="+ New List" />
 						            
+						            <Button
+		                        			android:id="@+id/deletelist_btn"
+		                       				android:layout_width="123dp"
+		                       				android:layout_height="wrap_content"
+		                        			android:layout_marginTop="5dp"
+		                        			android:layout_alignParentTop="true"
+		                        			android:layout_centerHorizontal="true"
+		                        			android:text="- Delete List" />
+						            
 						            <TextView
 							            android:id="@+id/sort_txt"
 							            android:layout_width="wrap_content"
@@ -301,13 +302,7 @@
 						                    android:layout_width="wrap_content"
 						                    android:layout_height="wrap_content"
 						                    android:text="Priority" />
-						
-						                <RadioButton
-						                    android:id="@+id/user_radio"
-						                    android:layout_width="wrap_content"
-						                    android:layout_height="wrap_content"
-						                    android:text="User" />
-						                
+					
 						                <RadioButton
 						                    android:id="@+id/price_radio"
 						                    android:layout_width="wrap_content"
@@ -319,9 +314,6 @@
 						    </SlidingDrawer>						 	
 					</RelativeLayout>
                 </FrameLayout>
-				
-                
-				
                 <LinearLayout
                     android:id="@+id/menu"
                     android:layout_width="match_parent"
@@ -331,15 +323,6 @@
                         android:id="@+id/relativeLayout1"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" >
-
-                        <Button
-                            android:id="@+id/settings_btn"
-					        android:layout_width="200dp"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentTop="true"
-                            android:layout_centerHorizontal="true"
-                            android:layout_marginTop="30dp"
-                            android:text="Settings" />
 
                         <Button
                             android:id="@+id/about_btn"
