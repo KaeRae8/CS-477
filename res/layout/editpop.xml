@@ -14,7 +14,7 @@
 	</TextView>
 	
 	<TextView
-		android:id="@+id/poptext"
+		android:id="@+id/poplable"
 		android:layout_width="100dp"
 		android:layout_height="30dp"
 		android:text="Edit Item"
@@ -52,6 +52,22 @@
 		android:inputType="number"
 	    android:hint="Quantity..." />
 	
+	<EditText
+	    android:id="@+id/date_fill"
+	    android:inputType="date"
+	    android:layout_width="260dp"
+	    android:layout_height="wrap_content"
+	    android:layout_x="30dp"
+		android:layout_y="225dp"
+	    android:hint="Date To Get Item By..." />
+	
+	<AutoCompleteTextView
+	    android:id="@+id/description_fill"
+	    android:layout_width="260dp"
+	    android:layout_height="wrap_content"
+	    android:layout_x="30dp"
+		android:layout_y="275dp"
+	    android:hint="Description..." />
 	
 	<TextView
 		android:id="@+id/poptext"

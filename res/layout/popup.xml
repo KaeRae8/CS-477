@@ -14,7 +14,7 @@
 	</TextView>
 	
 	<TextView
-		android:id="@+id/poptext"
+		android:id="@+id/poplabel"
 		android:layout_width="150dp"
 		android:layout_height="30dp"
 		android:text="Create New Item"

@@ -24,6 +24,7 @@ import android.widget.TabHost.TabSpec;
 
 public class Fair_ShareActivity extends Activity {
 	
+	protected static boolean firstpress = true;
 	String noteTitle = "You have no new notifications.";
 	LinkedList<OuterList> lists;
 	String listOwnerFirstName;
@@ -121,7 +122,12 @@ public class Fair_ShareActivity extends Activity {
     	final View popupView = inflater.inflate(R.layout.popup, null, false);
       	final PopupWindow pw = new PopupWindow(popupView,450,675,true);
       	
+    	final View buypopView = inflater.inflate(R.layout.buypop, null, false);
+      	final PopupWindow buywindow = new PopupWindow(buypopView,450,675,true);
       	
+      	final View deletepopView = inflater.inflate(R.layout.deletepop, null, false);
+      	final PopupWindow deletewindow = new PopupWindow(deletepopView,450,675,true);
+      	      	
         TabHost th = (TabHost) findViewById (R.id.tabhost);
         th.setup();
         
@@ -195,13 +201,41 @@ public class Fair_ShareActivity extends Activity {
 			}
 		});
         
-        
         Button delete_btn = (Button) findViewById(R.id.delete_btn);
         delete_btn.setOnClickListener(new View.OnClickListener() 
         {
             public void onClick(View v) 
             {
-            	makeToast("***Not Imp***Select items to be deleted.");
+            	
+            	if(firstpress)
+            	{
+            		firstpress = false;
+            		makeToast("Select Items to be deleted.\nPress Delete again to remove items.");
+            	}
+            	else
+            	{
+            		firstpress = true;
+            		deletewindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            	}
+            }
+        });
+        
+        Button canceldelete = (Button) deletepopView.findViewById(R.id.canceldelete_btn);
+        canceldelete.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	deletewindow.dismiss();  	
+            }
+        });
+        
+        Button confirmdelete = (Button) deletepopView.findViewById(R.id.confirmdelete_btn);
+        confirmdelete.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("Selected items have been removed.");
+            	deletewindow.dismiss();  	
             }
         });
         
@@ -210,7 +244,26 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
-            	makeToast("***Not Imp***Itmes have been bought? ***Needs confirmation window***");
+            	buywindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            }
+        });
+        
+        Button cancelbuy = (Button) buypopView.findViewById(R.id.cancelbuy_btn);
+        cancelbuy.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	buywindow.dismiss();  	
+            }
+        });
+        
+        Button confirmbuy = (Button) buypopView.findViewById(R.id.confirmbuy_btn);
+        confirmbuy.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	makeToast("Check item have been marked as bought.");
+            	buywindow.dismiss();  	
             }
         });
         
