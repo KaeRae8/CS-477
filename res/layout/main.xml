@@ -30,9 +30,15 @@
                 <LinearLayout
 				    android:id="@+id/groups"
 				    android:layout_width="match_parent"
-				    android:layout_height="match_parent" 
- 					android:background="#EEEEEF"
-                    android:orientation="vertical" >
+				    android:layout_height="match_parent" >
+				    
+                    
+				     <LinearLayout
+                        android:id="@+id/linearLayout2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+ 						android:background="#EEEEEF"
+                    	android:orientation="vertical" >
                          <TextView
                             android:id="@+id/grouptotal"
                             android:layout_width="match_parent"
@@ -82,7 +88,9 @@
                             android:background="#cc666666"
                             android:text="Sally owes you $00.00"
                             android:textAppearance="?android:attr/textAppearanceLarge" />
-
+					
+					</LinearLayout>
+				
 				</LinearLayout>
 				
                 <FrameLayout
@@ -98,13 +106,13 @@
 						<ScrollView
 						    android:id="@+id/scrollView1"
 						    android:layout_width="295dp"
-						    android:layout_height="match_parent" 
+						    android:layout_height="370dp" 
 						    android:background="#EEEEEF" >
 		
 							 <LinearLayout
            						 android:id="@+id/linearList"
            						 android:layout_width="match_parent"
-            					 android:layout_height="match_parent"
+            					 android:layout_height="wrap_content"
             					 android:orientation="vertical" >
 	
 							     <LinearLayout

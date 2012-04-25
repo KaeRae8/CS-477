@@ -133,7 +133,16 @@ public class Fair_ShareActivity extends Activity {
       	
       	final View deletelistpopView = inflater.inflate(R.layout.deletelistpop, null, false);
       	final PopupWindow deletelistwindow = new PopupWindow(deletelistpopView,450,675,true);
+      	
+      	final View aboutpopView = inflater.inflate(R.layout.aboutpop, null, false);
+      	final PopupWindow aboutwindow = new PopupWindow(aboutpopView,450,675,true);
+      	
+      	final View helppopView = inflater.inflate(R.layout.helppop, null, false);
+      	final PopupWindow helpwindow = new PopupWindow(helppopView,450,675,true);
       	      	
+      	final View logoutpopView = inflater.inflate(R.layout.logoutpop, null, false);
+      	final PopupWindow logoutwindow = new PopupWindow(logoutpopView,450,675,true);
+      	
         TabHost th = (TabHost) findViewById (R.id.tabhost);
         th.setup();
         
@@ -384,8 +393,16 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
-            	makeToast("***Not Imp***Needs popup window***");
-            	pw.dismiss();  	
+            	aboutwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            }
+        });
+        
+        Button closeabout = (Button) aboutpopView.findViewById(R.id.closeabout_btn);
+        closeabout.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	aboutwindow.dismiss();  	
             }
         });
         
@@ -395,8 +412,16 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
-            	makeToast("***Not Imp***Needs popup window***");
-            	pw.dismiss();  	
+            	helpwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            }
+        });
+        
+        Button closehelp = (Button) helppopView.findViewById(R.id.closehelp_btn);
+        closehelp.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	helpwindow.dismiss();  	
             }
         });
         
@@ -406,12 +431,29 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {	            	
+            	logoutwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            }
+        });
+        Button cancellogout = (Button) logoutpopView.findViewById(R.id.cancellogout_btn);
+        cancellogout.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	logoutwindow.dismiss();  	
+            }
+        });
+        
+        Button confirmlogout = (Button) logoutpopView.findViewById(R.id.confirmlogout_btn);
+        confirmlogout.setOnClickListener(new View.OnClickListener() 
+        {
+            public void onClick(View v) 
+            {
+            	logoutwindow.dismiss();  
             	Intent signIn = new Intent(Fair_ShareActivity.this,SignIn.class);
         		startActivity(signIn);
             	setContentView(R.layout.signin);
             }
         });
-        
     }
     
     public File readFile(String fileName) throws IOException
