@@ -12,8 +12,7 @@
         android:label="@string/app_name" >
         <activity
             android:name=".SignIn"
-            android:label="@string/app_name" 
-            android:screenOrientation="portrait">
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -21,8 +20,7 @@
         </activity>
         <activity
             android:name=".Fair_ShareActivity"
-            android:label="@string/app_name" 
-            android:screenOrientation="portrait">
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="fair_shareactivity.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />

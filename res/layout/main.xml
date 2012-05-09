@@ -27,7 +27,73 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" >
 				
-                 <FrameLayout
+                <LinearLayout
+				    android:id="@+id/groups"
+				    android:layout_width="match_parent"
+				    android:layout_height="match_parent" >
+				    
+                    
+				     <LinearLayout
+                        android:id="@+id/linearLayout2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+ 						android:background="#EEEEEF"
+                    	android:orientation="vertical" >
+                         <TextView
+                            android:id="@+id/grouptotal"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="#cc0066CC"
+                            android:text="Group List Total Cost is $00.00"
+                            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                        <TextView
+                            android:id="@+id/whatyouowegroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="#cc0066CC"
+                            android:text="Split 3 ways you owe $00.00"
+                            android:textAppearance="?android:attr/textAppearanceLarge" />
+                        
+                        <TextView
+                            android:id="@+id/youowejoe"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:background="#cc333333"
+                            android:text="You owe Joe $00.00"
+                            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                        <TextView
+                            android:id="@+id/joeowes"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="#cc333333"
+                            android:text="Joe owes you $00.00"
+                            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                        <TextView
+                            android:id="@+id/youowesally"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:background="#cc666666"
+                            android:text="You owe Sally $00.00"
+                            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                        <TextView
+                            android:id="@+id/sallowes"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="#cc666666"
+                            android:text="Sally owes you $00.00"
+                            android:textAppearance="?android:attr/textAppearanceLarge" />
+					
+					</LinearLayout>
+				
+				</LinearLayout>
+				
+                <FrameLayout
                     android:id="@+id/lists"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" >
@@ -40,7 +106,7 @@
 						<ScrollView
 						    android:id="@+id/scrollView1"
 						    android:layout_width="295dp"
-						    android:layout_height="353dp" 
+						    android:layout_height="370dp" 
 						    android:background="#EEEEEF" >
 		
 							 <LinearLayout
@@ -256,86 +322,9 @@
 						             
 						            </RadioGroup>
 						        </LinearLayout>
-						    </SlidingDrawer>
-
-						 <TextView
-						     android:id="@+id/textView3"
-						     android:layout_width="wrap_content"
-						     android:layout_height="wrap_content"
-						     android:layout_below="@+id/scrollView1"
-						     android:layout_centerHorizontal="true"
-						     android:text="Press and hold on an item to edit it.     "
-						     android:textAppearance="?android:attr/textAppearanceSmall" />
-						 	
+						    </SlidingDrawer>						 	
 					</RelativeLayout>
-                </FrameLayout>
-                <LinearLayout
-				    android:id="@+id/groups"
-				    android:layout_width="match_parent"
-				    android:layout_height="match_parent" >
-				    
-                    
-				     <LinearLayout
-                        android:id="@+id/linearLayout2"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
- 						android:background="#EEEEEF"
-                    	android:orientation="vertical" >
-                         <TextView
-                            android:id="@+id/grouptotal"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="#cc0066CC"
-                            android:text="Group List Total Cost is $00.00"
-                            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-                        <TextView
-                            android:id="@+id/whatyouowegroup"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="#cc0066CC"
-                            android:text="Split 3 ways you owe $00.00"
-                            android:textAppearance="?android:attr/textAppearanceLarge" />
-                        
-                        <TextView
-                            android:id="@+id/youowejoe"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
-                            android:background="#cc333333"
-                            android:text="You owe Joe $00.00"
-                            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-                        <TextView
-                            android:id="@+id/joeowes"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="#cc333333"
-                            android:text="Joe owes you $00.00"
-                            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-                        <TextView
-                            android:id="@+id/youowesally"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:background="#cc666666"
-                            android:text="You owe Sally $00.00"
-                            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-                        <TextView
-                            android:id="@+id/sallowes"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="#cc666666"
-                            android:text="Sally owes you $00.00"
-                            android:textAppearance="?android:attr/textAppearanceLarge" />
-					
-					</LinearLayout>
-				
-				</LinearLayout>
-				
-               
+                </FrameLayout>
                 <LinearLayout
                     android:id="@+id/menu"
                     android:layout_width="match_parent"
@@ -380,19 +369,5 @@
             </FrameLayout>
         </LinearLayout>
     </TabHost>
-
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Small Text"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Small Text"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
 
 </LinearLayout>

@@ -29,6 +29,7 @@ import android.widget.Toast;
 public class SignIn extends Activity{
 	
 	public boolean startup = true;
+	public boolean canLogin=true;
 	public File users;
 	public LinkedList<User> userList;
     public EditText username;
@@ -48,7 +49,9 @@ public class SignIn extends Activity{
        
 
         }
+        
         catch(Exception e){
+        	canLogin=false;
         	Log.d("colin", "mydebug "+e.getMessage());
         	e.printStackTrace();
         }
@@ -70,7 +73,7 @@ public class SignIn extends Activity{
 	            	//startActivity(startMain);
 	            	//setContentView(R.layout.main);
 	            	
-	            	
+	            	if(canLogin){
 	            	if(validLogin())
 	            	{
 		            	User valid= getValidUser();
@@ -81,8 +84,12 @@ public class SignIn extends Activity{
 		            	setContentView(R.layout.main);
 		            	startup = false;
 	            	}
-	            	else{
+	            		else{
 	            		makeToast("Invalid login. Please try again.");
+	            		}
+	            	}
+	            	else{
+	            		makeToast("Unable to connect to server. Please restart application");
 	            	}
 
             	}
@@ -128,39 +135,97 @@ public class SignIn extends Activity{
     
     public File readFile(String fileName) throws IOException
     {
+    	
     	File file=new File("/data/data/Fair_Share.fs/"+fileName);
 		String serverIP="zombiegod.com";
+		
         int serverPort = 1234;
         Socket socket = null;
         ObjectInputStream ois = null;
-        ObjectOutputStream oos = null;
+        ObjectOutputStream oos= null;
         
         try{
+        	Log.d("colin","creating socket");
             socket = new Socket(serverIP,serverPort);
+            Log.d("colin","created socket");
         }
         catch(BindException e){
+        	Log.d("colin","bind error");
+            System.out.println("Bind Error"+e.getMessage());
+            e.printStackTrace();
             System.exit(-1);
         }
         try{
+        	
+        	
+        	
+        	Log.d("colin","second try blcok looking for"+fileName);
         	oos = new ObjectOutputStream(socket.getOutputStream());
-            
+        	ois= new ObjectInputStream(socket.getInputStream());
+        	
+        	////////////////////////
+            oos.writeObject("read");
+            oos.writeObject(fileName);
+           String message = (String)ois.readObject();
+            if(message.equalsIgnoreCase("emptyFile")){
+                canLogin=false;
+                System.out.println("Empty file");
+                oos.flush();
+                oos.close();
+                ois.close();
+                return null;
+            }
+
+        	/////////////////////////
+            else{
+            	
+                oos.flush();
+                oos.close();
+                ois.close();
+                socket.close();
+                try{
+                	Log.d("colin","creating socket");
+                    socket = new Socket(serverIP,serverPort);
+                    Log.d("colin","created socket");
+                }
+                catch(BindException e){
+                	Log.d("colin","bind error");
+                    System.out.println("Bind Error"+e.getMessage());
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            	oos = new ObjectOutputStream(socket.getOutputStream());
+            	ois= new ObjectInputStream(socket.getInputStream());
                 //encode request
 				   String getRequest="read2";
 				   oos.writeObject(getRequest);
 				   getRequest=fileName;
 				   oos.writeObject(getRequest);
-                ois= new ObjectInputStream(socket.getInputStream());
+                
+                if(ois.available()>0){
+                
                 byte[] myBytes= new byte[1024];
+                Log.d("colin","created objects");
+
 				ois.read(myBytes,0,1024);
+				
+				Log.d("colin","read input stream");
 				FileOutputStream fos = new FileOutputStream(file);
 				fos.write(myBytes);
+				Log.d("colin","wrote into file");
                 //socket.close();
+                }
+                else{
+                	return null;
+                }
+            }
         }
         catch(Exception e){
-            System.out.println("I/O error");
+        	 Log.d("colin","I/O error");
+            System.out.println("I/O error"+e.getMessage());
             e.printStackTrace();
         }
-        
+        Log.d("colin","returning file");
     	return file;
     }
     

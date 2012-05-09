@@ -8,7 +8,7 @@
 		android:id="@+id/poptext"
 		android:layout_width="270dp"
 		android:layout_height="fill_parent"
-		android:background="#EDDDDDDD"
+		android:background="#ED555555"
 		android:layout_x="25dp"
 		android:layout_y="50dp">
 	</TextView>

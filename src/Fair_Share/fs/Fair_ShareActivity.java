@@ -25,7 +25,7 @@ import android.widget.TabHost.TabSpec;
 public class Fair_ShareActivity extends Activity {
 	
 	protected static boolean firstpress = true;
-	String noteTitle = "You have no new notifications.";
+	String noteTitle = " ";
 	LinkedList<OuterList> lists;
 	String listOwnerFirstName;
 	String listOwnerLastName;
@@ -64,7 +64,7 @@ public class Fair_ShareActivity extends Activity {
         	listOwnerLastName=super.getIntent().getStringExtra("lName");
         	
         	currentOuterList=null;
-        	Log.d("colin","mydebug looking for list");
+        	Log.d("colin","mydebug looking for list list size is "+lists.size());
         	for(int i=0;i<lists.size();i++){
         		
         		Log.d("colin","mydebug comparing "+lists.get(i).firstName+" and "+listOwnerFirstName+" then " +lists.get(i).lastName +" and "+ listOwnerLastName);
@@ -74,23 +74,26 @@ public class Fair_ShareActivity extends Activity {
         		currentOuterList =lists.get(i);
         		}
         	}
-        	
+        	Log.d("colin","mydebug going to display list");
+        	Log.d("colin","mydebug current list is "+currentOuterList.itemLists.get(0).listName);
         	//display users first list
         	displayList(currentOuterList.itemLists.get(0),1);
-
+        	Log.d("colin","mydebug displayed list");
+        	
         	currentListName=lists.get(0).itemLists.get(0).listName;
         	
+        	Log.d("colin","mydebug adding radio groups");
 
         	///////////////////////////////////
         	//add radio groups
         	RadioGroup listRadios=(RadioGroup) this.findViewById(R.id.radioGroup1);
         	listRadios.removeAllViews();
 
-        	RadioButton button;
+        	;
         	OnClickListener listener;
         	
         	for(int i =0;i<currentOuterList.itemLists.size() && i<3;i++){
-        		button=new RadioButton(Fair_ShareActivity.this);
+        		final RadioButton button=new RadioButton(Fair_ShareActivity.this);
         		button.setLayoutParams(new LayoutParams(
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -104,21 +107,42 @@ public class Fair_ShareActivity extends Activity {
                     {
                     	changeList(name);
                     	
+                    	RadioGroup radios=(RadioGroup) findViewById(R.id.radioGroup1);
+                    	for(int i=0;i<radios.getChildCount();i++){
+                    		RadioButton tempButton = (RadioButton)radios.getChildAt(i);
+                    		if(!tempButton.equals(button)){
+                    		tempButton.setChecked(false);
+                    		}
+                    		else{
+                    			tempButton.setChecked(true);
+                    		}
+                    		tempButton.setClickable(true);
+                    		
+                    	}
                     }
                 };
         		
         		button.setOnClickListener(listener);
         		
-
+        		if(i==0 && currentOuterList.itemLists.get(0).listName.equalsIgnoreCase(currentListName)){
+        			System.out.println("setting button to true");
+        			button.setChecked(true);
+        			button.setClickable(true);
+        		}
+        		button.setClickable(true);
         		listRadios.addView(button);
-        		
-        		
         	}
+        	
+        	///////////////////////////////////////////////////
+        	//done adding radio group
         	changeList(currentListName);
+        	Log.d("colin ", "set currentListName: "+currentListName);
+        	Log.d("colin ", " going to set info");
         	setGroupInfo();
+        	Log.d("colin ", " done setting info");
         }
         catch(Exception e){
-        	Log.d("colin", "mydebug error"+e.getMessage());
+        	Log.d("colin", "mydebug error7"+e.getMessage());
         }
         }
         
@@ -222,6 +246,8 @@ public class Fair_ShareActivity extends Activity {
             		descriptionText="empty";
             	}
 
+            	
+            	
             	String priority="";
             	if(buttonHigh.isChecked()){
             		priority="high";
@@ -230,7 +256,7 @@ public class Fair_ShareActivity extends Activity {
             		priority="medium";
             	}
             	else if(buttonLow.isChecked()){
-            		priority="high";
+            		priority="low";
             	}
 
             	
@@ -247,7 +273,13 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
+            	if(currentOuterList.itemLists.size()<3){
             	addlistwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
+            	}
+            	else
+            	{
+            		makeToast("Only 3 lists can be created");
+            	}
             }
         });
         
@@ -280,9 +312,13 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
-            	
+            	if(currentOuterList.itemLists.size()>1 && !currentOuterList.itemLists.get(0).listName.equalsIgnoreCase(currentListName)){
             	deletelistwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
-            }
+            		}
+            	else{
+            		makeToast("You cannot delete the first list");
+            	}
+             }
         });
         
         Button canceldeletelist = (Button) deletelistpopView.findViewById(R.id.canceldeletelist_btn);
@@ -488,6 +524,7 @@ public class Fair_ShareActivity extends Activity {
     
     public File readFile(String fileName) throws IOException
     {
+    	
     	File file=new File("/data/data/Fair_Share.fs/"+fileName);
 		String serverIP="zombiegod.com";
 		
@@ -497,31 +534,87 @@ public class Fair_ShareActivity extends Activity {
         ObjectOutputStream oos= null;
         
         try{
+        	Log.d("colin","creating socket");
             socket = new Socket(serverIP,serverPort);
+            Log.d("colin","created socket");
         }
         catch(BindException e){
+        	Log.d("colin","bind error");
+            System.out.println("Bind Error"+e.getMessage());
+            e.printStackTrace();
             System.exit(-1);
         }
         try{
+        	
+        	
+        	
+        	Log.d("colin","second try blcok looking for"+fileName);
         	oos = new ObjectOutputStream(socket.getOutputStream());
-            
+        	ois= new ObjectInputStream(socket.getInputStream());
+        	
+        	////////////////////////
+            oos.writeObject("read");
+            oos.writeObject(fileName);
+           String message = (String)ois.readObject();
+            if(message.equalsIgnoreCase("emptyFile")){
+                
+                System.out.println("Empty file");
+                oos.flush();
+                oos.close();
+                ois.close();
+                return null;
+            }
+
+        	/////////////////////////
+            else{
+            	
+                oos.flush();
+                oos.close();
+                ois.close();
+                socket.close();
+                try{
+                	Log.d("colin","creating socket");
+                    socket = new Socket(serverIP,serverPort);
+                    Log.d("colin","created socket");
+                }
+                catch(BindException e){
+                	Log.d("colin","bind error");
+                    System.out.println("Bind Error"+e.getMessage());
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            	oos = new ObjectOutputStream(socket.getOutputStream());
+            	ois= new ObjectInputStream(socket.getInputStream());
                 //encode request
 				   String getRequest="read2";
 				   oos.writeObject(getRequest);
 				   getRequest=fileName;
 				   oos.writeObject(getRequest);
-                ois= new ObjectInputStream(socket.getInputStream());
+                
+                if(ois.available()>0){
+                
                 byte[] myBytes= new byte[1024];
+                Log.d("colin","created objects");
+
 				ois.read(myBytes,0,1024);
+				
+				Log.d("colin","read input stream");
 				FileOutputStream fos = new FileOutputStream(file);
 				fos.write(myBytes);
+				Log.d("colin","wrote into file");
                 //socket.close();
+                }
+                else{
+                	return null;
+                }
+            }
         }
         catch(Exception e){
+        	 Log.d("colin","I/O error");
             System.out.println("I/O error"+e.getMessage());
             e.printStackTrace();
         }
-        
+        Log.d("colin","returning file");
     	return file;
     }
     
@@ -533,7 +626,7 @@ public class Fair_ShareActivity extends Activity {
     	for(int i=0;i<list.size();i++){
     		Log.d("colin","writing "+convertOuterListToLine(list.get(i)));
         	bw.write(convertOuterListToLine(list.get(i)));
-        if(i != list.size()){	
+        if(i != list.size()-1){	
         	bw.newLine();
         	}
     	}
@@ -542,7 +635,7 @@ public class Fair_ShareActivity extends Activity {
     	bw.close();
     	}
     	catch(Exception e){
-    		Log.d("colin", "mydebug error"+e.getMessage());
+    		Log.d("colin", "mydebug error!!"+e.getMessage());
     	}
     	
 
@@ -567,8 +660,41 @@ public class Fair_ShareActivity extends Activity {
     	returnString+= " List"+listNumber+"Name:";
     	returnString+= " "+list.listName.replace(" ","_").replace("\n","~")+" Items: ";
     	
-    	for(int i =0;i<list.items.size();i++){
-    		returnString+=" "+list.items.get(i).name.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).price.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).quantity.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).priority+" "+list.items.get(i).buyDate.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).desc.replace(" ","_").replace("\n", "~")+" ";
+    	String tempName;
+    	String tempPrice;
+    	String tempQuant;
+    	String tempBuyDate;
+    	String tempDesc;
+    	String tempPriority;
+    	
+    	for(int i =0;i<list.items.size()&&i<3;i++){
+        	 tempName=list.items.get(i).name.replace(" ","_").replace("\n", "~");
+        	 tempPrice=list.items.get(i).price.replace(" ","_").replace("\n", "~");
+        	 tempQuant=list.items.get(i).quantity.replace(" ","_").replace("\n", "~");
+        	 tempBuyDate=list.items.get(i).buyDate.replace(" ","_").replace("\n", "~");
+        	 tempPriority=list.items.get(i).priority;
+        	 tempDesc=list.items.get(i).desc.replace(" ","_").replace("\n", "~");
+        	 
+        	 if(tempDesc.trim().isEmpty()){
+        		 tempDesc="null";
+        	 }
+        	 if(tempName.trim().isEmpty()){
+        		 tempName="null";
+        	 }
+        	 if(tempPrice.trim().isEmpty()){
+        		 tempPrice="null";
+        	 }
+        	 if(tempQuant.trim().isEmpty()){
+        		 tempQuant="null";
+        	 }
+        	 if(tempBuyDate.trim().isEmpty()){
+        		 tempBuyDate="null";
+        	 }
+        	 if(tempPriority.trim().isEmpty()){
+        		 tempPriority="null";
+        	 }
+        	 
+    		returnString+=" "+tempName+" "+tempPrice+" "+tempQuant+" "+tempPriority+" "+tempBuyDate+" "+tempDesc+" ";
     	}
     	
     	return returnString;
@@ -596,7 +722,8 @@ public class Fair_ShareActivity extends Activity {
 		
     	}
     	catch(Exception e){
-    		 Log.d("colin", "mydebug error"+e.getMessage());
+    		 Log.d("colin", "mydebug error8"+e.getMessage());
+    		 e.printStackTrace();
     		return returnList;
     	}
     	
@@ -625,28 +752,30 @@ public class Fair_ShareActivity extends Activity {
     			break;
     		}
     		innerList=new ItemList(listName);
+    		if(tkn.hasMoreElements()){
+    			//get rid of items;
+    			throwAway=tkn.nextToken().replace("_"," ");
 
-    		//get rid of items;
-    		throwAway=tkn.nextToken().replace("_"," ");
 
+    			while(! throwAway.equals("null") ){
+    				thisToken=tkn.nextToken();
 
-    		while(! throwAway.equals("null")){
-    			thisToken=tkn.nextToken();
-
-    			if(thisToken.equals("null")){
-    				break;
-    				}
-    			if(thisToken.equals("done")){
-    				break;
-    				}
-    			if(thisToken.contains("List") && thisToken.contains("Name")){
-    				temp=thisToken.replace("_"," ");
-    				break;}
-    			item=new Item(thisToken.replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"));
-
-    			innerList.items.add(item);
-    		}
+    				if(thisToken.equals("null")){
+    					break;
+    					}
+    				if(thisToken.equals("done")){
+    					break;
+    					}
+    				if(thisToken.contains("List") && thisToken.contains("Name")){
+    					temp=thisToken.replace("_"," ");
+    					break;}
+    				item=new Item(thisToken.replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"));
+    				Log.d("colin", "mydebug adding item with name:"+item.name);
+    				innerList.items.add(item);
+    			}
     		list.itemLists.add(innerList);
+    		 
+    		}		
     	}
 
     	return list;
@@ -658,11 +787,11 @@ public class Fair_ShareActivity extends Activity {
     	//1=alphabetical
     	//2=priority
     	//3=price
-    	
+    	Log.d("colin ", " inside displayList");
     	LinearLayout listLayout = (LinearLayout)findViewById(R.id.linearList);
     	listLayout.removeAllViews();
     	
-    	
+    	Log.d("colin ", " removed views");
         final float scale = getResources().getDisplayMetrics().density;
         LinearLayout layout1;
         CheckBox check1;
@@ -688,7 +817,7 @@ public class Fair_ShareActivity extends Activity {
         Collections.sort(listIn.items,comparator);
         for(Item thisItem : listIn.items){
        
-        	
+        	Log.d("colin ", " adding item: "+thisItem.name);
         layout1 = new LinearLayout(Fair_ShareActivity.this);
     ////Edit menu popup /////////////////////////////////////////////////////////////////
         	LayoutInflater edit_inflater = (LayoutInflater) 
@@ -726,15 +855,18 @@ public class Fair_ShareActivity extends Activity {
     	            	RadioButton buttonLow=(RadioButton)editpw.getContentView().findViewById(R.id.prioritylow_radio_edit);
 
     	            	if(item.priority.equalsIgnoreCase("high")){
-    	            		buttonHigh.setPressed(true);
+    	            		buttonHigh.setChecked(true);
     	            	}
     	            	else if(item.priority.equalsIgnoreCase("medium")){
-    	            		buttonMed.setPressed(true);
+    	            		buttonMed.setChecked(true);
     	            	}
     	            	else if(item.priority.equalsIgnoreCase("low")){
-    	            		buttonLow.setPressed(true);
+    	            		buttonLow.setChecked(true);
     	            	}
 
+    	            	buttonLow.setClickable(true);
+    	            	buttonMed.setClickable(true);
+    	            	buttonHigh.setClickable(true);
     	            	
     	            	editpw.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
     	            	
@@ -796,11 +928,10 @@ public class Fair_ShareActivity extends Activity {
 	            		priority="medium";
 	            	}
 	            	else if(buttonLow.isChecked()){
-	            		priority="high";
+	            		priority="low";
 	            	}
 
-	            	
-	            	
+
 	            	changeItem(lists,(Item)editpopView.getTag(), new Item( nameText ,priceText ,quantityText, priority, quantityText, descriptionText), currentFileName,listOwnerFirstName,listOwnerLastName ,currentListName);
 	            	
 
@@ -939,9 +1070,7 @@ public class Fair_ShareActivity extends Activity {
     		e.printStackTrace();
     	}
     }
-
-    
-    
+ 
     public void removeItems(LinkedList<OuterList> list, LinkedList<Item> items, String filename,String listOwnerFirstName,String listOwnerLastName ,String listName){
     	int workingList=-1;
     	try{
@@ -984,6 +1113,7 @@ public class Fair_ShareActivity extends Activity {
     
     public void changeItem(LinkedList<OuterList> list, Item replacement,Item item, String filename,String listOwnerFirstName,String listOwnerLastName ,String listName){
     	int workingList=-1;
+    	Log.d("colin", "inside changeItem here p is:"+item.priority);
     	try{
     		System.out.println("change item step 1");
     	for(int i=0;i<list.size();i++){
@@ -998,6 +1128,7 @@ public class Fair_ShareActivity extends Activity {
     					Item tempItem=list.get(i).itemLists.get(j).items.get(k);
     						if(tempItem.name.equals(replacement.name) && tempItem.buyDate.equals(replacement.buyDate) && tempItem.desc.equals(replacement.desc) && tempItem.price.equals(replacement.price) && tempItem.priority.equals(replacement.priority)){
     							System.out.println("foundItem");
+    							System.out.println("adding item with p"+item.priority);
     							list.get(i).itemLists.get(j).items.remove(k);
     							list.get(i).itemLists.get(j).items.add(item);
     						
@@ -1022,8 +1153,7 @@ public class Fair_ShareActivity extends Activity {
     		Log.d("mydebug","error removing item to list "+e.getMessage());
     	}
     }
-    
-    
+        
     public void changeList(String listName){
     	for(int i=0;i<currentOuterList.itemLists.size();i++){
     		if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(listName)){
@@ -1091,7 +1221,7 @@ public class Fair_ShareActivity extends Activity {
         	
         	}
         	catch(Exception e){
-        		Log.d("colin", "mydebug error"+e.getMessage());
+        		Log.d("colin", "mydebug error!!!"+e.getMessage());
         	}
     	////remove items
     	removeItems(lists, items, currentFileName,listOwnerFirstName,listOwnerLastName ,currentListName);    
@@ -1127,7 +1257,7 @@ public class Fair_ShareActivity extends Activity {
     		
         	}
         	catch(Exception e){
-        		 Log.d("colin", "mydebug error"+e.getMessage());
+        		 Log.d("colin", "mydebug error!"+e.getMessage());
         		return returnList;
         	}
     	
@@ -1137,15 +1267,23 @@ public class Fair_ShareActivity extends Activity {
     	
     	int userCount = lists.size();
     	
+    	////////////////////////////////
+
+    	//////////////
+		
     	float dividedCost = Float.parseFloat(item.price)/userCount;
     	
     	//the cost should only be split up for the first item
     	if(currentOuterList.itemLists.get(0).listName.equalsIgnoreCase(currentListName)){
     		for(int i=0;i<records.size();i++){
-    			if(records.get(i).loanerFirstName.equalsIgnoreCase(listOwnerFirstName) && records.get(i).loanerLastName.equalsIgnoreCase(listOwnerLastName)){
-    			//add the split cost of the item to how much they owe this person.
-    			records.get(i).debt+=dividedCost;
-    			}
+    			
+        		for(int j=0;j<records.get(i).info.size();j++){
+        			
+        			if(records.get(i).info.get(j).loanerFirstName.equalsIgnoreCase(listOwnerFirstName) && records.get(i).info.get(j).loanerLastName.equalsIgnoreCase(listOwnerLastName)){
+        				//add the split cost of the item to how much they owe this person.
+        				records.get(i).info.get(j).debt+=dividedCost;
+        				}
+        		}
     		}
     	}
     	
@@ -1155,9 +1293,11 @@ public class Fair_ShareActivity extends Activity {
     
     public void setGroupInfo(){
     	try{
+    		Log.d("colin ", " groupInfo reading file");
     	File financial=readFile(super.getIntent().getStringExtra("group")+"Fin.txt");
+    	Log.d("colin ", " groupInfo read file");
     	LinkedList<FinancialRecord> records=parseFinances(financial);
-    	
+    	Log.d("colin ", " parsed finances");
     	int currentUsers=lists.size();
     	float totalCost=0;
     	float dividedCost=totalCost/currentUsers;
@@ -1193,6 +1333,7 @@ public class Fair_ShareActivity extends Activity {
         layout.addView(text2);
         
         for(int i=0;i<records.size();i++){
+        	
             TextView tempText = new TextView(Fair_ShareActivity.this);
             tempText.setBackgroundColor(0xcc333333);
             tempText.setLayoutParams(new LayoutParams(
@@ -1202,11 +1343,16 @@ public class Fair_ShareActivity extends Activity {
             tempText.setTextAppearance(this, android.R.style.TextAppearance_Medium);
             tempText.setText(records.get(i).toString());
             layout.addView(tempText);
+        	
         }
     	
     	
     	}
-    	catch(Exception e){}
+    	catch(Exception e){
+    		Log.d("colin ", " error displaying group info "+e.getMessage());
+    		e.printStackTrace();
+    		
+    	}
     }
     
     public void appendHistory(File history,Item item){
@@ -1234,7 +1380,7 @@ public class Fair_ShareActivity extends Activity {
         	
         	}
         	catch(Exception e){
-        		Log.d("colin", "mydebug error"+e.getMessage());
+        		Log.d("colin", "mydebug error!!!!!"+e.getMessage());
         	}
     }
     
@@ -1252,7 +1398,7 @@ public class Fair_ShareActivity extends Activity {
 		while ((strLine = br.readLine()) != null)   {
 			 Log.d("colin", "mydebug parsing"+strLine);
 			if(! strLine.trim().isEmpty()){
-				records.add(parseRecord(strLine));
+				records.add(parseRecord(strLine.replace('$', ' ')));
 			}
 		}
 
@@ -1260,7 +1406,8 @@ public class Fair_ShareActivity extends Activity {
 		
     	}
     	catch(Exception e){
-    		 Log.d("colin", "mydebug error"+e.getMessage());
+    		 Log.d("colin", "mydebug error!!!!!!"+e.getMessage());
+    		 e.printStackTrace();
     		 return records;
     	}
     	
@@ -1368,17 +1515,26 @@ public class Fair_ShareActivity extends Activity {
     
     public FinancialRecord parseRecord(String str){
     	
-    	
+    	try{
     	StringTokenizer tkn=new StringTokenizer(str);
     	String debterFirstName=tkn.nextToken();
     	String debterLastName=tkn.nextToken();
-    	tkn.nextToken();
-    	String loanerFirstName=tkn.nextToken();
-    	String loanerLastName=tkn.nextToken();
-    	float debt=Float.parseFloat(tkn.nextToken());
-    	FinancialRecord record=new FinancialRecord(debterFirstName,debterLastName,debt,loanerFirstName,loanerLastName);
 
+//    	float debt=Float.parseFloat(tkn.nextToken());
+    	FinancialRecord record=new FinancialRecord(debterFirstName,debterLastName);
+    	
+    	while(tkn.countTokens()>3){
+    		tkn.nextToken();
+    		record.info.add(new FinancialInfo(tkn.nextToken(),tkn.nextToken(),Float.parseFloat(tkn.nextToken())));
+    	}
     	return record;
+    	}
+    	catch(Exception e){
+    		Log.d("Error", "Error parsing single record");
+    		e.printStackTrace();
+    		return null;
+    	}
+    	
     }
     
     public void writeFile(String fileName, File file){
