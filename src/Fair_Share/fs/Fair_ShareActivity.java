@@ -32,6 +32,8 @@ public class Fair_ShareActivity extends Activity {
 	String currentListName;
 	String currentFileName;
 	OuterList currentOuterList;
+	int currentSorting=1;
+	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,10 +49,14 @@ public class Fair_ShareActivity extends Activity {
         else{
 
         try{
+        	
+
+        	System.out.println(super.getIntent().getStringExtra("group"));
+        	
         	lists = parseListFile(readFile(super.getIntent().getStringExtra("group")+".txt"));
         	
 
-        	//writeFile("KennyShaw.txt",ConvertListToFile(parseListFile(readFile("ColinGray"+".txt")),readFile("ColinGray"+".txt")));
+        	//("KennyShaw.txt",ConvertListToFile(parseListFile(readFile("ColinGray"+".txt")),readFile("ColinGray"+".txt")));
 
         	currentFileName=super.getIntent().getStringExtra("group")+".txt";
 
@@ -74,6 +80,7 @@ public class Fair_ShareActivity extends Activity {
 
         	currentListName=lists.get(0).itemLists.get(0).listName;
         	
+
         	///////////////////////////////////
         	//add radio groups
         	RadioGroup listRadios=(RadioGroup) this.findViewById(R.id.radioGroup1);
@@ -102,14 +109,13 @@ public class Fair_ShareActivity extends Activity {
         		
         		button.setOnClickListener(listener);
         		
-        		if(i==0){
-        			//button.setChecked(true);
-        		}
+
         		listRadios.addView(button);
         		
         		
         	}
-
+        	changeList(currentListName);
+        	setGroupInfo();
         }
         catch(Exception e){
         	Log.d("colin", "mydebug error"+e.getMessage());
@@ -188,10 +194,10 @@ public class Fair_ShareActivity extends Activity {
             {
             	
             	AutoCompleteTextView name = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.name_fill);
-            	AutoCompleteTextView price = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.price_fill);
+            	EditText price = (EditText)pw.getContentView().findViewById(R.id.price_fill);
             	AutoCompleteTextView quantity = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.quantity_fill);
             	AutoCompleteTextView description = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.description_fill);
-            	EditText date = (EditText)pw.getContentView().findViewById(R.id.date_fill);
+            	AutoCompleteTextView date = (AutoCompleteTextView)pw.getContentView().findViewById(R.id.date_fill);
             	
             	RadioButton buttonHigh=(RadioButton)pw.getContentView().findViewById(R.id.priorityhigh_radio);
             	RadioButton buttonMed=(RadioButton)pw.getContentView().findViewById(R.id.prioritymed_radio);
@@ -259,6 +265,10 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
+            	
+            	AutoCompleteTextView listName = (AutoCompleteTextView) addlistpopView.findViewById(R.id.name_fill_listAdd);	
+            	addList(currentOuterList,listName.getText().toString());
+            	
             	makeToast("New list has been created.");
             	addlistwindow.dismiss();  	
             }
@@ -270,6 +280,7 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
+            	
             	deletelistwindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
             }
         });
@@ -288,6 +299,7 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
+            	deleteList(currentOuterList,currentListName);
             	makeToast("List has been removed.");
             	deletelistwindow.dismiss();  	
             }
@@ -298,10 +310,23 @@ public class Fair_ShareActivity extends Activity {
         alphaSort.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
+				currentSorting=1;
 				for(int i =0;i<currentOuterList.itemLists.size();i++){
 					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
-						displayList(currentOuterList.itemLists.get(i),1);
+						displayList(currentOuterList.itemLists.get(i),currentSorting);
+					}
+				}
+			}
+		});
+        
+        RadioButton priceSort = (RadioButton) findViewById(R.id.price_radio);
+        priceSort.setOnClickListener(new View.OnClickListener() {
+			
+			public void onClick(View v) {
+				currentSorting=3;
+				for(int i =0;i<currentOuterList.itemLists.size();i++){
+					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
+						displayList(currentOuterList.itemLists.get(i),currentSorting);
 					}
 				}
 			}
@@ -311,9 +336,10 @@ public class Fair_ShareActivity extends Activity {
         prioritySort.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
+				currentSorting=2;
 				for(int i =0;i<currentOuterList.itemLists.size();i++){
 					if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(currentListName)){
-						displayList(currentOuterList.itemLists.get(i),2);
+						displayList(currentOuterList.itemLists.get(i),currentSorting);
 					}
 				}
 			}
@@ -325,15 +351,15 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
-            	
-            	if(firstpress)
+            	LinkedList<Item> items = getCheckedItems();
+
+            	if(items.size()==0)
             	{
-            		firstpress = false;
+            		
             		makeToast("Select Items to be deleted.\nPress Delete again to remove items.");
             	}
             	else
             	{
-            		firstpress = true;
             		deletewindow.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
             	}
             }
@@ -353,6 +379,8 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
+            	LinkedList<Item> items = getCheckedItems();
+            	removeItems(lists, items, currentFileName,listOwnerFirstName,listOwnerLastName ,currentListName);
             	makeToast("Selected items have been removed.");
             	deletewindow.dismiss();  	
             }
@@ -382,7 +410,9 @@ public class Fair_ShareActivity extends Activity {
         {
             public void onClick(View v) 
             {
-            	makeToast("Check item have been marked as bought.");
+            	LinkedList<Item> items = getCheckedItems();
+            	buyItems(items);
+            	makeToast("Checked items have been bought.");
             	buywindow.dismiss();  	
             }
         });
@@ -534,11 +564,11 @@ public class Fair_ShareActivity extends Activity {
 
     public String convertItemListToLine(ItemList list,int listNumber){
     	String returnString="";
-    	returnString+= "List"+listNumber+"Name:";
-    	returnString+= " "+list.listName+" Items:";
+    	returnString+= " List"+listNumber+"Name:";
+    	returnString+= " "+list.listName.replace(" ","_").replace("\n","~")+" Items: ";
     	
     	for(int i =0;i<list.items.size();i++){
-    		returnString+=" "+list.items.get(i).name.replace(" ","_")+" "+list.items.get(i).price.replace(" ","_")+" "+list.items.get(i).quantity.replace(" ","_")+" "+list.items.get(i).priority+" "+list.items.get(i).buyDate.replace(" ","_")+" "+list.items.get(i).desc.replace(" ","_")+" ";
+    		returnString+=" "+list.items.get(i).name.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).price.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).quantity.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).priority+" "+list.items.get(i).buyDate.replace(" ","_").replace("\n", "~")+" "+list.items.get(i).desc.replace(" ","_").replace("\n", "~")+" ";
     	}
     	
     	return returnString;
@@ -590,7 +620,7 @@ public class Fair_ShareActivity extends Activity {
     	while(temp.contains("List") && temp.contains("Name")&&tkn.hasMoreTokens()){
 
     		
-    		listName=tkn.nextToken();
+    		listName=tkn.nextToken().replace("_", " ").replace("~", "\n");
     		if(listName.trim().equalsIgnoreCase("null")){
     			break;
     		}
@@ -612,7 +642,7 @@ public class Fair_ShareActivity extends Activity {
     			if(thisToken.contains("List") && thisToken.contains("Name")){
     				temp=thisToken.replace("_"," ");
     				break;}
-    			item=new Item(thisToken.replace("_"," "),tkn.nextToken().replace("_"," "),tkn.nextToken().replace("_"," "),tkn.nextToken().replace("_"," "),tkn.nextToken().replace("_"," "),tkn.nextToken().replace("_"," "));
+    			item=new Item(thisToken.replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"),tkn.nextToken().replace("_"," ").replace("~","\n"));
 
     			innerList.items.add(item);
     		}
@@ -666,11 +696,46 @@ public class Fair_ShareActivity extends Activity {
     	        //Here x is the name of the xml which contains the popup components
     	        final View editpopView = edit_inflater.inflate(R.layout.editpop, null, false);
     	        final PopupWindow editpw = new PopupWindow(editpopView,450,675,true);
-
+    	        
+    	        editpopView.setTag(thisItem);
+    	        
     	        layout1.setOnLongClickListener(new View.OnLongClickListener() 
     	        {
     	            public boolean onLongClick(View v) 
     	            {
+    	            	
+    	            	Item item=(Item)editpopView.getTag();
+    	            	
+    	            	Log.d("debug",item.price);
+    	            	
+    	            	AutoCompleteTextView name = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.name_fill_edit);
+    	            	name.setText(item.name);
+    	            	EditText price = (EditText)editpw.getContentView().findViewById(R.id.price_fill_edit);
+    	            	price.setText(item.price);
+    	            	AutoCompleteTextView quantity = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.quantity_fill_edit);
+    	            	quantity.setText(item.quantity);
+    	            	AutoCompleteTextView description = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.description_fill_edit);
+    	            	description.setText(item.desc);
+    	            	AutoCompleteTextView date = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.date_fill_edit);
+    	            	date.setText(item.buyDate);
+    	            	
+    	            	
+    	            	
+    	            	RadioButton buttonHigh=(RadioButton)editpw.getContentView().findViewById(R.id.priorityhigh_radio_edit);
+    	            	RadioButton buttonMed=(RadioButton)editpw.getContentView().findViewById(R.id.prioritymed_radio_edit);
+    	            	RadioButton buttonLow=(RadioButton)editpw.getContentView().findViewById(R.id.prioritylow_radio_edit);
+
+    	            	if(item.priority.equalsIgnoreCase("high")){
+    	            		buttonHigh.setPressed(true);
+    	            	}
+    	            	else if(item.priority.equalsIgnoreCase("medium")){
+    	            		buttonMed.setPressed(true);
+    	            	}
+    	            	else if(item.priority.equalsIgnoreCase("low")){
+    	            		buttonLow.setPressed(true);
+    	            	}
+
+    	            	
     	            	editpw.showAtLocation(findViewById(R.id.root), Gravity.CENTER, -200, -70);
     	            	
     	            	 
@@ -692,6 +757,54 @@ public class Fair_ShareActivity extends Activity {
 	        {
 	            public void onClick(View v) 
 	            {
+	            	
+	            	AutoCompleteTextView name = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.name_fill_edit);
+	            	EditText price = (EditText)editpw.getContentView().findViewById(R.id.price_fill_edit);
+	            	AutoCompleteTextView quantity = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.quantity_fill_edit);
+	            	AutoCompleteTextView description = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.description_fill_edit);
+	            	AutoCompleteTextView date = (AutoCompleteTextView)editpw.getContentView().findViewById(R.id.date_fill_edit);
+	            	
+	            	RadioButton buttonHigh=(RadioButton)editpw.getContentView().findViewById(R.id.priorityhigh_radio_edit);
+	            	RadioButton buttonMed=(RadioButton)editpw.getContentView().findViewById(R.id.prioritymed_radio_edit);
+	            	RadioButton buttonLow=(RadioButton)editpw.getContentView().findViewById(R.id.prioritylow_radio_edit);
+
+
+	            	
+	            	String nameText=name.getText().toString();
+	            	String priceText= price.getText().toString();
+	            	String quantityText=quantity.getText().toString();
+	            	String descriptionText= description.getText().toString();
+	            	
+	            	if(nameText.isEmpty()){
+	            		nameText="empty";
+	            	}
+	            	if(priceText.isEmpty()){
+	            		priceText="empty";
+	            	}
+	            	if(quantityText.isEmpty()){
+	            		quantityText="empty";
+	            	}
+	            	if(descriptionText.isEmpty()){
+	            		descriptionText="empty";
+	            	}
+
+	            	String priority="";
+	            	if(buttonHigh.isChecked()){
+	            		priority="high";
+	            	}
+	            	else if(buttonMed.isChecked()){
+	            		priority="medium";
+	            	}
+	            	else if(buttonLow.isChecked()){
+	            		priority="high";
+	            	}
+
+	            	
+	            	
+	            	changeItem(lists,(Item)editpopView.getTag(), new Item( nameText ,priceText ,quantityText, priority, quantityText, descriptionText), currentFileName,listOwnerFirstName,listOwnerLastName ,currentListName);
+	            	
+
+	            	
 	            	makeToast("Item Saved");
 	            	editpw.dismiss();  	
 	            }
@@ -704,6 +817,8 @@ public class Fair_ShareActivity extends Activity {
         layout1.setBackgroundColor(0xccCC0000);
         layout1.setOrientation(0);
         layout1.setLayoutParams(llp);
+        
+        
         
         check1 = new CheckBox(Fair_ShareActivity.this);
             check1.setLayoutParams(new LayoutParams(
@@ -729,6 +844,7 @@ public class Fair_ShareActivity extends Activity {
         text2.setTextAppearance(this, android.R.style.TextAppearance_Large);
         text2.setText("$"+thisItem.price);
        
+        layout1.setTag(thisItem);
         layout1.addView(check1);
         layout1.addView(text1);
         layout1.addView(text2);
@@ -743,6 +859,8 @@ public class Fair_ShareActivity extends Activity {
         text3.setPadding((int) (39 * scale + 0.5f),0, (int) (5 * scale + 0.5f), 0);
         text3.setTextAppearance(this, android.R.style.TextAppearance_Small);
         //text3.setText("requested by:");
+        
+
         
         text4 = new TextView(Fair_ShareActivity.this);
         text4.setLayoutParams(new LayoutParams(
@@ -787,17 +905,22 @@ public class Fair_ShareActivity extends Activity {
   
     public void addItem(LinkedList<OuterList> list, Item item, String filename,String listOwnerFirstName,String listOwnerLastName ,String listName){
     	
-    	
+    	int workingList=-1;
     	try{
     		System.out.println("add item step 1");
     	for(int i=0;i<list.size();i++){
+    		System.out.println("add item list size"+lists.size());
     		System.out.println("add item step 2");
     		if(list.get(i).firstName.equalsIgnoreCase(listOwnerFirstName)  && list.get(i).lastName.equalsIgnoreCase(listOwnerLastName)){
-    		for(int j=0;j<list.get(i).itemLists.size();j++){
-    			if(list.get(i).itemLists.get(j).listName==listName){
+    			System.out.println("looking in inner list");
+    			for(int j=0;j<list.get(i).itemLists.size();j++){
+    				System.out.println("looking in inner inner list");
+    				System.out.println("comparing "+list.get(i).itemLists.get(j).listName +" and "+listName);
+    			if(list.get(i).itemLists.get(j).listName.equalsIgnoreCase(listName)){
     				list.get(i).itemLists.get(j).items.add(item);
     				System.out.println("adding item i:"+i+" j:"+j);
-    				displayList(list.get(i).itemLists.get(j),1);
+    				workingList=i;
+    				displayList(list.get(i).itemLists.get(j),currentSorting);
     			}
     				
     			}
@@ -805,17 +928,102 @@ public class Fair_ShareActivity extends Activity {
     	}
     	
     	//the first list of every person needs to be the same.
-    	//for(int i=0;i<list.size();i++){
-    	//	list.get(i).itemLists.get(0).items  = list.get(0).itemLists.get(0).items;
-    	//}
+    	for(int i=0;i<list.size();i++){
+    		list.get(i).itemLists.get(0).items  = list.get(workingList).itemLists.get(0).items;
+    	}
     	
     	writeFile(filename,ConvertListToFile(list,readFile(filename)));
     	}
     	catch(Exception e){
     		Log.d("mydebug","error adding item to list "+e.getMessage());
+    		e.printStackTrace();
     	}
     }
 
+    
+    
+    public void removeItems(LinkedList<OuterList> list, LinkedList<Item> items, String filename,String listOwnerFirstName,String listOwnerLastName ,String listName){
+    	int workingList=-1;
+    	try{
+    		System.out.println("remove item step 1");
+    	for(int i=0;i<list.size();i++){
+    		System.out.println("remove item step 2");
+    		if(list.get(i).firstName.equalsIgnoreCase(listOwnerFirstName)  && list.get(i).lastName.equalsIgnoreCase(listOwnerLastName)){
+    		for(int j=0;j<list.get(i).itemLists.size();j++){
+    			if(list.get(i).itemLists.get(j).listName.equalsIgnoreCase(listName)){
+    				//list.get(i).itemLists.get(j).items.add(item);
+    				workingList=i;
+    				for(int k =0;k<list.get(i).itemLists.get(j).items.size();k++ ){
+    					
+    					for(int l =0;l<items.size();l++){
+    						if(list.get(i).itemLists.get(j).items.get(k).equals(items.get(l))){
+    							list.get(i).itemLists.get(j).items.remove(k);
+    							items.remove(l);
+    						}
+    					}
+    				}
+
+    				displayList(list.get(i).itemLists.get(j),currentSorting);
+    			}
+    				
+    			}
+    		}
+    	}
+    	
+    	//the first list of every person needs to be the same.
+    	for(int i=0;i<list.size();i++){
+    		list.get(i).itemLists.get(0).items  = list.get(workingList).itemLists.get(0).items;
+    	}
+    	
+    	writeFile(filename,ConvertListToFile(list,readFile(filename)));
+    	}
+    	catch(Exception e){
+    		Log.d("mydebug","error removing item to list "+e.getMessage());
+    	}
+    }
+    
+    public void changeItem(LinkedList<OuterList> list, Item replacement,Item item, String filename,String listOwnerFirstName,String listOwnerLastName ,String listName){
+    	int workingList=-1;
+    	try{
+    		System.out.println("change item step 1");
+    	for(int i=0;i<list.size();i++){
+    		System.out.println("change item step 2");
+    		if(list.get(i).firstName.equalsIgnoreCase(listOwnerFirstName)  && list.get(i).lastName.equalsIgnoreCase(listOwnerLastName)){
+    		for(int j=0;j<list.get(i).itemLists.size();j++){
+    			if(list.get(i).itemLists.get(j).listName.equalsIgnoreCase(listName)){
+    				//list.get(i).itemLists.get(j).items.add(item);
+    				workingList=i;
+    				for(int k =0;k<list.get(i).itemLists.get(j).items.size();k++ ){
+    					System.out.println("looking through itemList");
+    					Item tempItem=list.get(i).itemLists.get(j).items.get(k);
+    						if(tempItem.name.equals(replacement.name) && tempItem.buyDate.equals(replacement.buyDate) && tempItem.desc.equals(replacement.desc) && tempItem.price.equals(replacement.price) && tempItem.priority.equals(replacement.priority)){
+    							System.out.println("foundItem");
+    							list.get(i).itemLists.get(j).items.remove(k);
+    							list.get(i).itemLists.get(j).items.add(item);
+    						
+    					}
+    				}
+
+    				displayList(list.get(i).itemLists.get(j),currentSorting);
+    			}
+    				
+    			}
+    		}
+    	}
+    	
+    	//the first list of every person needs to be the same.
+    	for(int i=0;i<list.size();i++){
+    		list.get(i).itemLists.get(0).items  = list.get(workingList).itemLists.get(0).items;
+    	}
+    	
+    	writeFile(filename,ConvertListToFile(list,readFile(filename)));
+    	}
+    	catch(Exception e){
+    		Log.d("mydebug","error removing item to list "+e.getMessage());
+    	}
+    }
+    
+    
     public void changeList(String listName){
     	for(int i=0;i<currentOuterList.itemLists.size();i++){
     		if(currentOuterList.itemLists.get(i).listName.equalsIgnoreCase(listName)){
@@ -823,6 +1031,354 @@ public class Fair_ShareActivity extends Activity {
     			currentListName=listName;
     		}
     	}
+    }
+    
+    public LinkedList<Item> getCheckedItems(){
+    	LinkedList<Item> returnList = new LinkedList<Item>();
+    	Item thisItem;
+    	
+    	LinearLayout listLayout = (LinearLayout)findViewById(R.id.linearList);
+    	for(int i=0;i<listLayout.getChildCount();i+=2){
+    		//each item is made up of two layouts
+    		//i is the first, i+1 is the second
+    		
+    		 LinearLayout layout1 = (LinearLayout)listLayout.getChildAt(i);
+    		 LinearLayout layout2 = (LinearLayout)listLayout.getChildAt(i+1);
+    		 
+    		 CheckBox check = (CheckBox)layout1.getChildAt(0);
+    		 TextView itemQuantity=(TextView)layout1.getChildAt(1);
+    		 TextView itemPrice=(TextView)layout1.getChildAt(2);
+    		 String itemName = check.getText().toString();
+    		 //itemQuantity
+    		if(check.isChecked()){
+    			
+    			thisItem=(Item)layout1.getTag();
+				returnList.add(thisItem);
+
+        	}
+    	}
+    	
+    	return returnList;
+    }
+    
+    public void buyItems(LinkedList<Item> items){
+    	try
+    	{	
+    	File history=readFile(super.getIntent().getStringExtra("group")+"Hist.txt");
+    	File financial=readFile(super.getIntent().getStringExtra("group")+"Fin.txt");
+    	LinkedList<FinancialRecord> records=parseFinances(financial);
+    	
+    	for(int i=0;i<items.size();i++){
+    		records=updateRecords(records,history,items.get(i));
+    		}
+    	
+    	////write records back
+    	
+    	try{
+        	BufferedWriter bw = new BufferedWriter(new FileWriter(financial));
+        	for(int i=0;i<records.size();i++){
+        		Log.d("colin","writing "+records.get(i).toString());
+            	bw.write(records.get(i).toString());
+            if(i != records.size()){	
+            	bw.newLine();
+            	}
+        	}
+
+        	bw.flush();
+        	bw.close();
+        	
+        	writeFile(super.getIntent().getStringExtra("group")+"Fin.txt",financial);
+        	
+        	}
+        	catch(Exception e){
+        		Log.d("colin", "mydebug error"+e.getMessage());
+        	}
+    	////remove items
+    	removeItems(lists, items, currentFileName,listOwnerFirstName,listOwnerLastName ,currentListName);    
+    	setGroupInfo();
+    	}
+    	
+    	
+    	catch(Exception e){
+    		
+    		System.out.println(e.getMessage());
+    		e.printStackTrace();
+    	}
+    }
+    
+    public LinkedList<String> parseHistory(File history){
+    	LinkedList<String> returnList=new LinkedList<String>();
+    	try{
+    		FileInputStream fis = new FileInputStream(history);
+    		DataInputStream in = new DataInputStream(fis);
+    		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+    		String strLine;
+    		
+    		
+    		//read each line
+    		while ((strLine = br.readLine()) != null)   {
+    			 Log.d("colin", "mydebug parsing"+strLine);
+    			if(! strLine.trim().isEmpty()){
+    			returnList.add(strLine);
+    			}
+    		}
+
+    		return returnList;
+    		
+        	}
+        	catch(Exception e){
+        		 Log.d("colin", "mydebug error"+e.getMessage());
+        		return returnList;
+        	}
+    	
+    }
+    
+    public LinkedList<FinancialRecord> updateRecords(LinkedList<FinancialRecord> records, File history, Item item){
+    	
+    	int userCount = lists.size();
+    	
+    	float dividedCost = Float.parseFloat(item.price)/userCount;
+    	
+    	//the cost should only be split up for the first item
+    	if(currentOuterList.itemLists.get(0).listName.equalsIgnoreCase(currentListName)){
+    		for(int i=0;i<records.size();i++){
+    			if(records.get(i).loanerFirstName.equalsIgnoreCase(listOwnerFirstName) && records.get(i).loanerLastName.equalsIgnoreCase(listOwnerLastName)){
+    			//add the split cost of the item to how much they owe this person.
+    			records.get(i).debt+=dividedCost;
+    			}
+    		}
+    	}
+    	
+    	appendHistory(history,item);
+    	return records;
+    }
+    
+    public void setGroupInfo(){
+    	try{
+    	File financial=readFile(super.getIntent().getStringExtra("group")+"Fin.txt");
+    	LinkedList<FinancialRecord> records=parseFinances(financial);
+    	
+    	int currentUsers=lists.size();
+    	float totalCost=0;
+    	float dividedCost=totalCost/currentUsers;
+    	for(int i=0;i<currentOuterList.itemLists.get(0).items.size();i++){
+    		totalCost+=Float.parseFloat(currentOuterList.itemLists.get(0).items.get(i).price);
+    	}
+    	
+    	LinearLayout layout = (LinearLayout)findViewById(R.id.linearLayout2);
+    	layout.removeAllViews();
+    	
+    	TextView text1;
+    	TextView text2;
+    	
+        text1 = new TextView(Fair_ShareActivity.this);
+        text1.setBackgroundColor(0xcc0066CC);
+        text1.setLayoutParams(new LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+ 
+        text1.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+        text1.setText("Group List Total Cost is $"+totalCost);
+    	
+        text2 = new TextView(Fair_ShareActivity.this);
+        text2.setBackgroundColor(0xcc0066CC);
+        text2.setLayoutParams(new LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+ 
+        text2.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+        text2.setText("Split "+currentUsers+" ways you owe $"+dividedCost);
+        
+        layout.addView(text1);
+        layout.addView(text2);
+        
+        for(int i=0;i<records.size();i++){
+            TextView tempText = new TextView(Fair_ShareActivity.this);
+            tempText.setBackgroundColor(0xcc333333);
+            tempText.setLayoutParams(new LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+     
+            tempText.setTextAppearance(this, android.R.style.TextAppearance_Medium);
+            tempText.setText(records.get(i).toString());
+            layout.addView(tempText);
+        }
+    	
+    	
+    	}
+    	catch(Exception e){}
+    }
+    
+    public void appendHistory(File history,Item item){
+    	
+    	LinkedList<String> previousHistory = parseHistory(history);
+    	
+    	try{
+        	BufferedWriter bw = new BufferedWriter(new FileWriter(history));
+        	
+        	
+        	
+        	for(int i=0;i<previousHistory.size();i++){
+        	bw.write(previousHistory.get(i));
+        	bw.newLine();
+        	}
+        	
+        		String str=listOwnerFirstName+" "+listOwnerLastName+" bought "+item.name+" for "+item.price;
+            	bw.write(str.trim());
+
+        
+        	bw.flush();
+        	bw.close();
+        	
+        	writeFile(super.getIntent().getStringExtra("group")+"Hist.txt",history);
+        	
+        	}
+        	catch(Exception e){
+        		Log.d("colin", "mydebug error"+e.getMessage());
+        	}
+    }
+    
+    public LinkedList<FinancialRecord> parseFinances(File file){
+    	LinkedList<FinancialRecord> records=new LinkedList<FinancialRecord>();
+    	
+    	try{
+		FileInputStream fis = new FileInputStream(file);
+		DataInputStream in = new DataInputStream(fis);
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+		String strLine;
+		
+		
+		//read each line
+		while ((strLine = br.readLine()) != null)   {
+			 Log.d("colin", "mydebug parsing"+strLine);
+			if(! strLine.trim().isEmpty()){
+				records.add(parseRecord(strLine));
+			}
+		}
+
+		return records;
+		
+    	}
+    	catch(Exception e){
+    		 Log.d("colin", "mydebug error"+e.getMessage());
+    		 return records;
+    	}
+    	
+    	
+    }
+
+    public void deleteList(OuterList outList,String listName){
+    	
+    	for(int i=0;i<outList.itemLists.size();i++){
+    		if(outList.itemLists.get(i).listName.equalsIgnoreCase(listName)){
+    			if(i!=0){
+    			outList.itemLists.remove(i);
+    				try{
+    				writeFile(currentFileName,ConvertListToFile(lists,readFile(currentFileName)));
+    				}
+    				catch(Exception e){
+    					System.out.println("error writing file");
+    				}
+    			}
+    			else{
+    				makeToast("You can not remove the group list");
+    		
+    			}
+    		}
+    	}
+    	RadioGroup listRadios=(RadioGroup) this.findViewById(R.id.radioGroup1);
+    	listRadios.removeAllViews();
+
+    	RadioButton button;
+    	OnClickListener listener;
+    	
+    	for(int i =0;i<currentOuterList.itemLists.size() && i<3;i++){
+    		button=new RadioButton(Fair_ShareActivity.this);
+    		button.setLayoutParams(new LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+    		button.setText(currentOuterList.itemLists.get(i).listName);
+    		
+    		final String name=button.getText().toString();
+    		
+    		listener = new View.OnClickListener() 
+            {
+                public void onClick(View v) 
+                {
+                	changeList(name);
+                	
+                }
+            };
+    		
+    		button.setOnClickListener(listener);
+    		
+
+    		listRadios.addView(button);
+    		
+    		
+    	}
+    	changeList(currentListName);
+    	
+    }
+
+    public void addList(OuterList outList, String listName){
+    	outList.itemLists.add(new ItemList(listName));
+    	
+		try{
+		writeFile(currentFileName,ConvertListToFile(lists,readFile(currentFileName)));
+		}
+		catch(Exception e){
+			System.out.println("error writing file");
+		}
+    	
+    	RadioGroup listRadios=(RadioGroup) this.findViewById(R.id.radioGroup1);
+    	listRadios.removeAllViews();
+
+    	RadioButton button;
+    	OnClickListener listener;
+    	
+    	for(int i =0;i<currentOuterList.itemLists.size() && i<3;i++){
+    		button=new RadioButton(Fair_ShareActivity.this);
+    		button.setLayoutParams(new LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+    		button.setText(currentOuterList.itemLists.get(i).listName);
+    		
+    		final String name=button.getText().toString();
+    		
+    		listener = new View.OnClickListener() 
+            {
+                public void onClick(View v) 
+                {
+                	changeList(name);
+                	
+                }
+            };
+    		
+    		button.setOnClickListener(listener);
+    		
+
+    		listRadios.addView(button);
+    		
+    		
+    	}
+    	changeList(currentListName);
+    	
+    }
+    
+    public FinancialRecord parseRecord(String str){
+    	
+    	
+    	StringTokenizer tkn=new StringTokenizer(str);
+    	String debterFirstName=tkn.nextToken();
+    	String debterLastName=tkn.nextToken();
+    	tkn.nextToken();
+    	String loanerFirstName=tkn.nextToken();
+    	String loanerLastName=tkn.nextToken();
+    	float debt=Float.parseFloat(tkn.nextToken());
+    	FinancialRecord record=new FinancialRecord(debterFirstName,debterLastName,debt,loanerFirstName,loanerLastName);
+
+    	return record;
     }
     
     public void writeFile(String fileName, File file){

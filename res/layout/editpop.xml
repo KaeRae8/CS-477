@@ -8,7 +8,7 @@
 		android:id="@+id/poptext"
 		android:layout_width="270dp"
 		android:layout_height="fill_parent"
-		android:background="#ED555555"
+		android:background="#EDDDDDDD"
 		android:layout_x="25dp"
 		android:layout_y="50dp">
 	</TextView>
@@ -25,7 +25,7 @@
 	</TextView>
 	
 	<AutoCompleteTextView
-	    android:id="@+id/name_fill"
+	    android:id="@+id/name_fill_edit"
 	    android:layout_width="260dp"
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
@@ -34,27 +34,25 @@
 	 <requestFocus />
 	</AutoCompleteTextView>
 	
-	<AutoCompleteTextView
-	    android:id="@+id/price_fill"
+	<EditText
+	    android:id="@+id/price_fill_edit"
 	    android:layout_width="260dp"
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
 		android:layout_y="125dp"
-		android:inputType="number"
+		android:inputType="numberDecimal"
 	    android:hint="Price..." />
 	
 	<AutoCompleteTextView
-	    android:id="@+id/quantity_fill"
+	    android:id="@+id/quantity_fill_edit"
 	    android:layout_width="260dp"
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
 		android:layout_y="175dp"
-		android:inputType="number"
 	    android:hint="Quantity..." />
 	
-	<EditText
-	    android:id="@+id/date_fill"
-	    android:inputType="date"
+	<AutoCompleteTextView
+	    android:id="@+id/date_fill_edit"
 	    android:layout_width="260dp"
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
@@ -62,7 +60,7 @@
 	    android:hint="Date To Get Item By..." />
 	
 	<AutoCompleteTextView
-	    android:id="@+id/description_fill"
+	    android:id="@+id/description_fill_edit"
 	    android:layout_width="260dp"
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
@@ -89,13 +87,13 @@
         android:orientation="horizontal" >
         
         <RadioGroup
-            android:id="@+id/priority_group"
+            android:id="@+id/priority_group_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" 
             android:orientation="horizontal">
 
             <RadioButton
-                android:id="@+id/priorityhigh_radio"
+                android:id="@+id/priorityhigh_radio_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingRight="15dp"
@@ -103,7 +101,7 @@
                 android:text="High" />
 
             <RadioButton
-                android:id="@+id/prioritymed_radio"
+                android:id="@+id/prioritymed_radio_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingRight="25dp"
@@ -111,7 +109,7 @@
                 android:text="Med" />
 
             <RadioButton
-                android:id="@+id/prioritylow_radio"
+                android:id="@+id/prioritylow_radio_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checked="true"

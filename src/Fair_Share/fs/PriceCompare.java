@@ -6,7 +6,9 @@ public class PriceCompare implements Comparator<Item>{
  
     public int compare(Item item1, Item item2) {
  
-    	return item1.price.compareTo(item2.price);
+    	Float item1P=Float.parseFloat(item1.price);
+    	Float item2P=Float.parseFloat(item2.price);
+    	return item1P.compareTo(item2P);
     	
     }
 }

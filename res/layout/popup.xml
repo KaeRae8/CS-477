@@ -8,7 +8,7 @@
 		android:id="@+id/poptext"
 		android:layout_width="270dp"
 		android:layout_height="fill_parent"
-		android:background="#ED555555"
+		android:background="#EDDDDDDD"
 		android:layout_x="25dp"
 		android:layout_y="50dp">
 	</TextView>
@@ -34,12 +34,13 @@
 	 <requestFocus />
 	</AutoCompleteTextView>
 	
-	<AutoCompleteTextView
+	<EditText
 	    android:id="@+id/price_fill"
 	    android:layout_width="260dp"
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
 		android:layout_y="125dp"
+		android:inputType="numberDecimal"
 	    android:hint="Price..." />
 	
 	<AutoCompleteTextView
@@ -50,9 +51,8 @@
 		android:layout_y="175dp"
 	    android:hint="Quantity..." />
 	
-	<EditText
+	<AutoCompleteTextView
 	    android:id="@+id/date_fill"
-	    android:inputType="date"
 	    android:layout_width="260dp"
 	    android:layout_height="wrap_content"
 	    android:layout_x="30dp"
